@@ -1,8 +1,0 @@
-# imported dependencies, may need review
-
-colorzero==2.0
-gpiozero==1.6.2
-picamera==1.13
-PyBluez==0.23
-pyserial==3.5
-requests~=2.27.1
