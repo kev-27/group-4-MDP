@@ -1,0 +1,13 @@
+train: E:/workspace/mdp/PretrainingDataset/A/train/images
+val: E:/workspace/mdp/PretrainingDataset/A/valid/images
+test: E:/workspace/mdp/PretrainingDataset/A/test/images
+
+nc: 34
+names: ['11', '12', '13', '14', '15', '16', '17', '18', '19', '20', '21', '22', '23', '24', '25', '26', '27', '28', '29', '30', '31', '32', '33', '34', '35', '36', '37', '38', '39', '40', '99', 'arrow-bullseye', 'bullseye-arrow', 'bullseye-arrow-bullseye']
+
+roboflow:
+  workspace: mdp-mtfjx
+  project: mdp-zkxca
+  version: 6
+  license: CC BY 4.0
+  url: https://universe.roboflow.com/mdp-mtfjx/mdp-zkxca/dataset/6
