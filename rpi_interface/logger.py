@@ -1,28 +1,38 @@
-import logging
+import logging.config
+import logging.handlers
+import atexit
+import json
+import pathlib
 
-def prepare_logger() -> logging.Logger:
+logger = logging.getLogger(__name__)
+
+def setup_logging():
+    config_file = pathlib.Path("configs/logging_configs.json")
+    with open(config_file) as file:
+        config = json.load(file)
+    logging.config.dictConfig(config)
+    queue_handler = logging.getHandlerByName("queue_handler")
+    if queue_handler is not None:
+        queue_handler.listener.start()
+        atexit.register(queue_handler.listener.stop)
+
+def main():
+    setup_logging()
+
+    # boilerplates to test functions
     """
-    Creates a logger that is able to both print to console and save to file.
+    logging.basicConfig(level="INFO")
+    logger.debug("debug message")
+    logger.info("info message")
+    logger.warning("warning message")
+    logger.error("error message")
+    logger.critical("critical message")
+    try:
+        1 / 0
+    except ZeroDivisionError:
+        logger.exception("exception message")
     """
-    log_format = logging.Formatter(
-        '%(asctime)s :: %(levelname)s :: %(message)s')
 
-    logger = logging.getLogger(__name__)
-    logger.setLevel(logging.DEBUG)
+if __name__ == "__main__":
+    main()
 
-    if not logger.hasHandlers():
-        # Console handler
-        console_handler = logging.StreamHandler()
-        console_handler.setLevel(logging.DEBUG)
-        console_handler.setFormatter(log_format)
-
-        # File handler
-        file_handler = logging.FileHandler('logfile.txt')
-        file_handler.setLevel(logging.DEBUG)
-        file_handler.setFormatter(log_format)
-
-        # Add handlers to logger
-        logger.addHandler(console_handler)
-        logger.addHandler(file_handler)
-
-    return logger
