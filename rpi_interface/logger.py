@@ -7,6 +7,8 @@ import pathlib
 logger = logging.getLogger(__name__)
 
 def setup_logging():
+    log_dir = pathlib.Path("logs")
+    log_dir.mkdir(parents=True, exist_ok=True)
     config_file = pathlib.Path("configs/logging_configs.json")
     with open(config_file) as file:
         config = json.load(file)
