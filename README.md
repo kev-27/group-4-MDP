@@ -12,3 +12,6 @@ $ mkdir android_remote_controller
 - `pyesonekyaw/CZ3004-SC2079-MDP`
     - Currently, the `rpi_interface` and `image_recognition` are based on it
 - `Pante/SC2079`
+- `mCodingLLC/VideosSampleCode`
+    - For quick reference on good, modern practices
+    - `logger.py` is re-written based on the suggestions
