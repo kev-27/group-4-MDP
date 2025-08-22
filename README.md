@@ -1,3 +1,26 @@
+# Fast Launch
+Now deployed In huggingface https://huggingface.co/spaces/Mahiruoshi/mdpg4
+## Test directly
+```
+import requests
+
+url = "https://mahiruoshi-mdpg4.hf.space/"  # 你的 Space 地址
+file_path = "20230825_122540_jpg.rf.f0620856e7afdbd116ceffdfd512b03a.jpg"
+
+with open(file_path, "rb") as f:
+    files = {"file": f}
+    response = requests.post(url, files=files)
+
+print("Status:", response.status_code)
+try:
+    print("Response:", response.json())
+except:
+    print("Response:", response.text)
+```
+##
+You can use docker following huggingface instructions directly
+
+## Local Implement
 Base on Yolov5
 ```bash
 pip install -r requirements.txt
