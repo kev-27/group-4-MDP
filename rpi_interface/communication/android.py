@@ -164,7 +164,7 @@ class AndroidLink(Link):
     def send(self, message: AndroidMessage):
         """Send message to Android"""
         try:
-            self.client_sock.send(f"{message.jsonify}\n".encode("utf-8"))
+            self.client_sock.send(f"{message.jsonify}\n".encode("ascii"))
             self.logger.debug(f"Sent to Android: {message.jsonify}")
         except OSError as e:
             self.logger.error(f"Error sending message to Android: {e}")
@@ -175,7 +175,7 @@ class AndroidLink(Link):
         try:
             tmp = self.client_sock.recv(1024)
             self.logger.debug(tmp)
-            message = tmp.strip().decode("utf-8")
+            message = tmp.strip().decode("ascii")
             self.logger.debug(f"Received from Android: {message}")
             return message
         except OSError as e:  # connection broken, try to reconnect
