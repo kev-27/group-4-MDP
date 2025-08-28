@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import Optional
-from logger import prepare_logger
+from logger.logger import logger
 
 
 class Link(ABC):
@@ -14,7 +14,7 @@ class Link(ABC):
         """
         Constructor for Link.
         """
-        self.logger = prepare_logger()
+        self.logger =logger
 
     @abstractmethod
     def send(self, message: str) -> None:

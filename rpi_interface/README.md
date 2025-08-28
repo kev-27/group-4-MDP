@@ -83,4 +83,8 @@ $ pip install -r requirements.txt
 Files like `consts.py`, `settings.py` etc. are directly lifted, we need to change accordingly. The
 following is to set up the RPI environment, not for your local machines
 
+### MAC address of A7
 
+```bash
+90:EE:C7:E7:D3:72
+```
