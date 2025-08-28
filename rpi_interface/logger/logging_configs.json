@@ -29,23 +29,12 @@
       "filename": "logs/errors.log",
       "maxBytes": 5000000,
       "backupCount": 5
-    },
-
-    "queue_handler": {
-      "class": "logging.handlers.QueueHandler",
-      "handlers": [
-        "stdout",
-        "file"
-      ],
-      "respect_handler_level": true
     }
   },
 
   "root": {
     "level": "DEBUG",
-    "handlers": [
-      "queue_handler"
-    ]
+    "handlers": ["stdout", "file"]
   }
-
 }
+

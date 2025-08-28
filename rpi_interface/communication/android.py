@@ -4,6 +4,7 @@ import socket
 from typing import Optional
 import bluetooth
 from communication.link import Link
+from pydbus import SystemBus
 
 
 class AndroidMessage:
@@ -122,7 +123,13 @@ class AndroidLink(Link):
         self.logger.info("Bluetooth connection started")
         try:
             # Set RPi to be discoverable in order for service to be advertisable
-            os.system('echo -e "power on\nagent on\ndefault-agent\ndiscoverable on\npairable on\n" | bluetoothctl')
+            # --- D-Bus adapter setup ---
+            bus = SystemBus()
+            adapter = bus.get("org.bluez", "/org/bluez/hci0")  
+            adapter.Powered = True
+            adapter.Discoverable = True
+            adapter.Pairable = True
+            adapter.DiscoverableTimeout = 120 
 
             # Initialize server socket
             self.server_sock = bluetooth.BluetoothSocket(bluetooth.RFCOMM)
