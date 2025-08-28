@@ -4,8 +4,6 @@ import socket
 from typing import Optional
 import bluetooth
 from communication.link import Link
-from pydbus import SystemBus
-
 
 class AndroidMessage:
     """
@@ -123,26 +121,26 @@ class AndroidLink(Link):
         self.logger.info("Bluetooth connection started")
         try:
             # Set RPi to be discoverable in order for service to be advertisable
-            # --- D-Bus adapter setup ---
-            bus = SystemBus()
-            adapter = bus.get("org.bluez", "/org/bluez/hci0")  
-            adapter.Powered = True
-            adapter.Discoverable = True
-            adapter.Pairable = True
-            adapter.DiscoverableTimeout = 120 
+            os.system("sudo hciconfig hci0 piscan")
 
             # Initialize server socket
             self.server_sock = bluetooth.BluetoothSocket(bluetooth.RFCOMM)
-            self.server_sock.bind(("", bluetooth.PORT_ANY))
+            # self.server_sock.bind(("", bluetooth.PORT_ANY))
+            self.server_sock.bind(("", 2))
             self.server_sock.listen(1)
 
             # Parameters
-            port = self.server_sock.getsockname()[1]
-            uuid = '94f39d29-7d6d-437d-973b-fba39e49d4ee'
+            # port = self.server_sock.getsockname()[1]
+            port = 2
+            uuid = 'b2a5ef6a-ec41-45b5-8aae-0f9ff16c09ce'
 
             # Advertise
-            bluetooth.advertise_service(self.server_sock, "MDP-Group2-RPi", service_id=uuid, service_classes=[
-                                        uuid, bluetooth.SERIAL_PORT_CLASS], profiles=[bluetooth.SERIAL_PORT_PROFILE])
+            bluetooth.advertise_service(
+                self.server_sock, 
+                "mdpgrp4",  
+                service_id=uuid,  # custom unique identifier
+                service_classes=[uuid, bluetooth.SERIAL_PORT_CLASS], 
+                profiles=[bluetooth.SERIAL_PORT_PROFILE])
 
             self.logger.info(
                 f"Awaiting Bluetooth connection on RFCOMM CHANNEL {port}")
@@ -181,8 +179,8 @@ class AndroidLink(Link):
         """Receive message from Android"""
         try:
             tmp = self.client_sock.recv(1024)
-            self.logger.debug(tmp)
-            message = tmp.strip().decode("ascii")
+            message = tmp.decode("ascii").strip()
+            self.logger.debug(message)
             self.logger.debug(f"Received from Android: {message}")
             return message
         except OSError as e:  # connection broken, try to reconnect
