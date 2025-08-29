@@ -1,0 +1,608 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/background">
+
+    <com.example.mdp.CanvasGrid
+        android:id="@+id/grid"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:backgroundTint="#ffffff"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <ImageView
+        android:id="@+id/car"
+        android:layout_width="75px"
+        android:layout_height="100px"
+        app:srcCompat="@drawable/ship"
+        tools:ignore="MissingConstraints" />
+
+    <!-- Sliding Drawer -->
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:backgroundTint="#B5E882"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/grid">
+
+        <ImageView
+            android:id="@+id/view"
+            android:layout_width="75dp"
+            android:layout_height="526dp"
+            android:layout_marginTop="16dp"
+            android:scaleType="fitXY"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <ImageView
+            android:id="@+id/obstacle1"
+            android:layout_width="35px"
+            android:layout_height="35px"
+            android:layout_marginTop="130dp"
+            android:layout_marginEnd="24dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:srcCompat="@drawable/obstacle_1_n" />
+
+        <ImageView
+            android:id="@+id/obstacle2"
+            android:layout_width="35px"
+            android:layout_height="35px"
+            android:layout_marginTop="8dp"
+            app:layout_constraintEnd_toEndOf="@+id/obstacle1"
+            app:layout_constraintTop_toBottomOf="@+id/obstacle1"
+            app:srcCompat="@drawable/obstacle_2_n"
+            tools:layout_editor_absoluteX="448dp" />
+
+        <ImageView
+            android:id="@+id/obstacle3"
+            android:layout_width="35px"
+            android:layout_height="35px"
+            android:layout_marginTop="8dp"
+            app:layout_constraintEnd_toEndOf="@+id/obstacle2"
+            app:layout_constraintTop_toBottomOf="@+id/obstacle2"
+            app:srcCompat="@drawable/obstacle_3_n"
+            tools:layout_editor_absoluteX="448dp" />
+
+        <ImageView
+            android:id="@+id/obstacle4"
+            android:layout_width="35px"
+            android:layout_height="35px"
+            android:layout_marginTop="8dp"
+            app:layout_constraintEnd_toEndOf="@+id/obstacle3"
+            app:layout_constraintTop_toBottomOf="@+id/obstacle3"
+            app:srcCompat="@drawable/obstacle_4_n"
+            tools:layout_editor_absoluteX="448dp" />
+
+        <ImageView
+            android:id="@+id/obstacle5"
+            android:layout_width="35px"
+            android:layout_height="35px"
+            android:layout_marginTop="8dp"
+            app:layout_constraintEnd_toEndOf="@+id/obstacle4"
+            app:layout_constraintTop_toBottomOf="@+id/obstacle4"
+            app:srcCompat="@drawable/obstacle_5_n"
+            tools:layout_editor_absoluteX="448dp" />
+
+        <ImageView
+            android:id="@+id/obstacle6"
+            android:layout_width="35px"
+            android:layout_height="35px"
+            android:layout_marginTop="8dp"
+            app:layout_constraintEnd_toEndOf="@+id/obstacle5"
+            app:layout_constraintTop_toBottomOf="@+id/obstacle5"
+            app:srcCompat="@drawable/obstacle_6_n"
+            tools:layout_editor_absoluteX="448dp" />
+
+        <ImageView
+            android:id="@+id/obstacle7"
+            android:layout_width="35px"
+            android:layout_height="35px"
+            android:layout_marginTop="8dp"
+            app:layout_constraintEnd_toEndOf="@+id/obstacle6"
+            app:layout_constraintTop_toBottomOf="@+id/obstacle6"
+            app:srcCompat="@drawable/obstacle_7_n"
+            tools:layout_editor_absoluteX="448dp" />
+
+        <ImageView
+            android:id="@+id/obstacle8"
+            android:layout_width="35px"
+            android:layout_height="35px"
+            android:layout_marginTop="8dp"
+            app:layout_constraintEnd_toEndOf="@+id/obstacle7"
+            app:layout_constraintTop_toBottomOf="@+id/obstacle7"
+            app:srcCompat="@drawable/obstacle_8_n"
+            tools:layout_editor_absoluteX="448dp" />
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="600dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="1.0"
+            app:layout_constraintStart_toStartOf="parent">
+
+            <ImageView
+                android:id="@+id/informationBackgroundImg"
+                android:layout_width="700dp"
+                android:layout_height="325dp"
+                android:scaleType="fitXY"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="0.0"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintVertical_bias="0.941" />
+
+            <TextView
+                android:id="@+id/statusWindowText"
+                android:layout_width="400dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:fontFamily="@font/jockey_one_regular"
+                android:maxLength="12"
+                android:text="Ready"
+                android:textColor="#A62424"
+                android:textSize="30dp"
+                app:layout_constraintStart_toEndOf="@+id/statusWindowTitle"
+                app:layout_constraintTop_toTopOf="@+id/statusWindowTitle" />
+
+            <Button
+                android:id="@+id/setButton"
+                android:layout_width="95dp"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="20dp"
+                android:backgroundTint="#FFA500"
+                android:fontFamily="@font/jockey_one_regular"
+                android:paddingHorizontal="15dp"
+                android:paddingVertical="12dp"
+                android:text="Set"
+                android:textColor="#FFFFFF"
+                android:textSize="19sp"
+                app:layout_constraintBottom_toBottomOf="@+id/mapControlTitle"
+                app:layout_constraintStart_toEndOf="@+id/mapControlTitle"
+                app:layout_constraintTop_toTopOf="@+id/mapControlTitle" />
+
+            <ImageButton
+                android:id="@+id/reverseButton"
+                android:layout_width="73dp"
+                android:layout_height="65dp"
+                android:layout_below="@+id/forwardButton"
+                android:layout_marginTop="20dp"
+                android:background="@null"
+                android:paddingHorizontal="34dp"
+                android:paddingVertical="14dp"
+                android:src="@drawable/move_arrow_down"
+                app:layout_constraintEnd_toEndOf="@+id/forwardButton"
+                app:layout_constraintStart_toStartOf="@+id/forwardButton"
+                app:layout_constraintTop_toBottomOf="@+id/forwardButton" />
+
+            <Button
+                android:id="@+id/timerButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="1000dp"
+                android:backgroundTint="#dc4048"
+                android:fontFamily="@font/jockey_one_regular"
+                android:text="Stop timer"
+                android:textColor="#ffffff"
+                android:textSize="20sp"
+                app:layout_constraintEnd_toEndOf="@+id/IRTimer"
+                app:layout_constraintStart_toStartOf="@+id/IRTimer"
+                app:layout_constraintTop_toBottomOf="@+id/IRTimer" />
+
+            <Chronometer
+                android:id="@+id/IRTimer"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="1000dp"
+                android:textColor="@color/white"
+                android:textSize="30dp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toEndOf="@+id/statusWindowText"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <TextView
+                android:id="@+id/statusWindowTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:layout_marginTop="180dp"
+                android:fontFamily="@font/jockey_one_regular"
+                android:text="Robot Status:"
+                android:textColor="@color/white"
+                android:textSize="30dp"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="@+id/mapControlTitle" />
+
+            <TextView
+                android:id="@+id/mapControlTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="96dp"
+                android:layout_marginBottom="56dp"
+                android:fontFamily="@font/jockey_one_regular"
+                android:text="Map Controls:"
+                android:textColor="@color/white"
+                android:textSize="18dp"
+                android:visibility="visible"
+                app:layout_constraintBottom_toBottomOf="@+id/rightButton"
+                app:layout_constraintStart_toEndOf="@+id/rightButton" />
+
+            <TextView
+                android:id="@+id/commandControlsTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="56dp"
+                android:fontFamily="@font/jockey_one_regular"
+                android:text="Command Controls:"
+                android:textColor="@color/white"
+                android:textSize="18dp"
+                app:layout_constraintEnd_toEndOf="@+id/mapControlTitle"
+                app:layout_constraintTop_toBottomOf="@+id/mapControlTitle" />
+
+            <TextView
+                android:id="@+id/presetControlTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="50dp"
+                android:fontFamily="@font/jockey_one_regular"
+                android:text="Preset Controls:"
+                android:textColor="@color/white"
+                android:textSize="18sp"
+                app:layout_constraintEnd_toEndOf="@+id/commandControlsTitle"
+                app:layout_constraintTop_toBottomOf="@+id/commandControlsTitle" />
+
+            <TextView
+                android:id="@+id/escapeTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="15dp"
+                android:fontFamily="@font/jockey_one_regular"
+                android:text="Escape"
+                android:textColor="#ff0f0f"
+                android:textSize="25sp"
+                app:layout_constraintEnd_toEndOf="@+id/presetControlTitle"
+                app:layout_constraintTop_toBottomOf="@+id/presetControlTitle" />
+
+            <TextView
+                android:id="@+id/ModeTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="0dp"
+                android:fontFamily="@font/jockey_one_regular"
+                android:text="mode:"
+                android:textColor="#ff0f0f"
+                android:textSize="25sp"
+                app:layout_constraintEnd_toEndOf="@+id/escapeTitle"
+                app:layout_constraintTop_toBottomOf="@+id/escapeTitle" />
+
+            <Button
+                android:id="@+id/saveButton"
+                android:layout_width="95dp"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="20dp"
+                android:backgroundTint="#000000"
+                android:fontFamily="@font/jockey_one_regular"
+                android:paddingHorizontal="15dp"
+                android:paddingVertical="12dp"
+                android:text="Save"
+                android:textColor="#FFFFFF"
+                android:textSize="20sp"
+                app:layout_constraintBottom_toBottomOf="@+id/preset1Button"
+                app:layout_constraintStart_toEndOf="@+id/preset1Button"
+                app:layout_constraintTop_toTopOf="@+id/preset1Button" />
+
+            <Button
+                android:id="@+id/sendButton"
+                android:layout_width="95dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="20dp"
+                android:backgroundTint="#000000"
+                android:fontFamily="@font/jockey_one_regular"
+                android:paddingHorizontal="15dp"
+                android:paddingVertical="12dp"
+                android:text="SEND"
+                android:textColor="#FFFFFF"
+                android:textSize="20sp"
+                app:layout_constraintEnd_toEndOf="@+id/saveButton"
+                app:layout_constraintTop_toBottomOf="@+id/saveButton"
+                app:layout_constraintVertical_bias="0.0" />
+
+            <Button
+                android:id="@+id/stopButton"
+                android:layout_width="95dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="20dp"
+                android:backgroundTint="#000000"
+                android:fontFamily="@font/jockey_one_regular"
+                android:paddingHorizontal="15dp"
+                android:paddingVertical="12dp"
+                android:text="STOP"
+                android:textColor="#FFFFFF"
+                android:textSize="20sp"
+                app:layout_constraintEnd_toEndOf="@+id/preset1Button"
+                app:layout_constraintTop_toBottomOf="@+id/saveButton"
+                app:layout_constraintVertical_bias="0.0" />
+
+            <Button
+                android:id="@+id/startButton"
+                android:layout_width="95dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="20dp"
+                android:backgroundTint="#ff0f0f"
+                android:fontFamily="@font/jockey_one_regular"
+                android:paddingHorizontal="15dp"
+                android:paddingVertical="12dp"
+                android:text="START"
+                android:textColor="#8B0000"
+                android:textSize="20sp"
+                app:layout_constraintEnd_toEndOf="@+id/preset1Button"
+                app:layout_constraintTop_toBottomOf="@+id/saveButton"
+                app:layout_constraintVertical_bias="0.0" />
+
+            <ImageButton
+                android:id="@+id/rightButton"
+                android:layout_width="65dp"
+                android:layout_height="59dp"
+                android:layout_marginStart="20dp"
+                android:layout_toRightOf="@id/leftButton"
+                android:background="@null"
+                android:paddingHorizontal="34dp"
+                android:paddingVertical="14dp"
+                android:src="@drawable/move_arrow_right"
+                app:layout_constraintStart_toEndOf="@+id/leftButton"
+                app:layout_constraintTop_toTopOf="@+id/leftButton" />
+
+            <Button
+                android:id="@+id/SPBtn"
+                android:layout_width="95dp"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="20dp"
+                android:backgroundTint="#A62424"
+                android:fontFamily="@font/jockey_one_regular"
+                android:paddingHorizontal="15dp"
+                android:paddingVertical="12dp"
+                android:text="SP"
+                android:textColor="#FFFFFF"
+                android:textSize="20sp"
+                app:layout_constraintBottom_toBottomOf="@+id/IRButton"
+                app:layout_constraintStart_toEndOf="@+id/IRButton"
+                app:layout_constraintTop_toTopOf="@+id/IRButton"
+                app:layout_constraintVertical_bias="0.0" />
+
+            <ImageButton
+                android:id="@+id/forwardButton"
+                android:layout_width="73dp"
+                android:layout_height="65dp"
+                android:layout_marginTop="292dp"
+                android:background="@null"
+                android:paddingHorizontal="34dp"
+                android:paddingVertical="14dp"
+                android:src="@drawable/move_arrow_up"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="0.091"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/textView9" />
+
+            <ImageButton
+                android:id="@+id/leftButton"
+                android:layout_width="65dp"
+                android:layout_height="59dp"
+                android:layout_below="@id/forwardButton"
+                android:layout_marginStart="8dp"
+                android:layout_marginTop="40dp"
+                android:background="@null"
+                android:paddingHorizontal="30dp"
+                android:paddingVertical="14dp"
+                android:src="@drawable/move_arrow_left"
+                app:layout_constraintHorizontal_bias="0.3"
+                app:layout_constraintStart_toEndOf="@+id/forwardButton"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="@+id/forwardButton" />
+
+            <TextView
+                android:id="@+id/textView9"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/jockey_one_regular"
+                android:text="Direction:"
+                android:textColor="@color/white"
+                android:textSize="30dp"
+                app:layout_constraintStart_toEndOf="@+id/textView7"
+                app:layout_constraintTop_toBottomOf="@+id/statusWindowTitle" />
+
+            <TextView
+                android:id="@+id/textView3"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/jockey_one_regular"
+                android:text="("
+                android:textColor="@color/white"
+                android:textSize="30dp"
+                app:layout_constraintStart_toStartOf="@+id/statusWindowTitle"
+                app:layout_constraintTop_toBottomOf="@+id/statusWindowTitle" />
+
+            <TextView
+                android:id="@+id/y_tv"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/jockey_one_regular"
+                android:text="0"
+                android:textColor="@color/white"
+                android:textSize="30dp"
+                app:layout_constraintStart_toEndOf="@+id/comma"
+                app:layout_constraintTop_toBottomOf="@+id/statusWindowTitle" />
+
+            <TextView
+                android:id="@+id/x_tv"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/jockey_one_regular"
+                android:text="0"
+                android:textColor="@color/white"
+                android:textSize="30dp"
+                app:layout_constraintStart_toEndOf="@+id/textView3"
+                app:layout_constraintTop_toBottomOf="@+id/statusWindowTitle" />
+
+            <TextView
+                android:id="@+id/comma"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/jockey_one_regular"
+                android:text=","
+                android:textColor="@color/white"
+                android:textSize="30dp"
+                app:layout_constraintStart_toEndOf="@+id/x_tv"
+                app:layout_constraintTop_toBottomOf="@+id/statusWindowTitle" />
+
+            <TextView
+                android:id="@+id/textView7"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/jockey_one_regular"
+                android:text=")"
+                android:textColor="@color/white"
+                android:textSize="30dp"
+                app:layout_constraintStart_toEndOf="@+id/y_tv"
+                app:layout_constraintTop_toBottomOf="@+id/statusWindowTitle" />
+
+            <TextView
+                android:id="@+id/dir_tv"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/jockey_one_regular"
+                android:text="None"
+                android:textColor="@color/white"
+                android:textSize="30dp"
+                app:layout_constraintStart_toEndOf="@+id/textView9"
+                app:layout_constraintTop_toTopOf="@+id/textView9" />
+
+            <Button
+                android:id="@+id/preset1Button"
+                android:layout_width="95dp"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="20dp"
+                android:backgroundTint="#000000"
+                android:fontFamily="@font/jockey_one_regular"
+                android:paddingHorizontal="15dp"
+                android:paddingVertical="12dp"
+                android:text="Load"
+                android:textColor="#FFFFFF"
+                android:textSize="20sp"
+                app:layout_constraintBottom_toBottomOf="@+id/presetControlTitle"
+                app:layout_constraintStart_toEndOf="@+id/presetControlTitle"
+                app:layout_constraintTop_toTopOf="@+id/presetControlTitle" />
+
+            <Button
+                android:id="@+id/IRButton"
+                android:layout_width="95dp"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="20dp"
+                android:backgroundTint="#A62424"
+                android:fontFamily="@font/jockey_one_regular"
+                android:paddingHorizontal="15dp"
+                android:paddingVertical="12dp"
+                android:text="IR"
+                android:textColor="#FFFFFF"
+                android:textSize="20sp"
+                app:layout_constraintBottom_toBottomOf="@+id/commandControlsTitle"
+                app:layout_constraintStart_toEndOf="@+id/commandControlsTitle"
+                app:layout_constraintTop_toTopOf="@+id/commandControlsTitle" />
+
+            <Button
+                android:id="@+id/resetButton"
+                android:layout_width="95dp"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="20dp"
+                android:backgroundTint="#dc4048"
+                android:fontFamily="@font/jockey_one_regular"
+                android:paddingHorizontal="14dp"
+                android:paddingVertical="12dp"
+                android:text="Reset"
+                android:textColor="#FFFFFF"
+                android:textSize="20sp"
+                app:layout_constraintBottom_toBottomOf="@+id/setButton"
+                app:layout_constraintStart_toEndOf="@+id/setButton"
+                app:layout_constraintTop_toTopOf="@+id/setButton" />
+
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+        <androidx.constraintlayout.widget.Guideline
+            android:id="@+id/guideline2"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            app:layout_constraintGuide_begin="80dp" />
+
+        <androidx.constraintlayout.widget.Guideline
+            android:id="@+id/guideline3"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            app:layout_constraintGuide_begin="531dp" />
+
+        <!-- Status Window -->
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <FrameLayout
+        android:layout_width="wrap_content"
+        android:layout_height="fill_parent"
+        android:orientation="horizontal"
+        app:layout_constraintGuide_begin="679dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <SlidingDrawer
+            android:id="@+id/drawer"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:content="@+id/content"
+            android:handle="@+id/handle"
+            android:orientation="horizontal"
+            android:rotation="180">
+
+
+            <ImageView
+                android:id="@id/handle"
+                android:layout_width="50dip"
+                android:layout_height="50dip"
+                android:rotation="180"
+                android:src="@drawable/ic_baseline_camera_alt_24"
+                android:translationY="-193dp" />
+
+            <LinearLayout
+                android:id="@id/content"
+                android:layout_width="fill_parent"
+                android:layout_height="fill_parent"
+                android:background="#282A3A"
+                android:orientation="vertical"
+                android:rotation="180">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="--------------------Snapshots-----------------"
+                    android:textAlignment="center"
+                    android:textColor="@color/white"
+                    android:textSize="28dp" />
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/recylerView"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent" />
+
+            </LinearLayout>
+
+        </SlidingDrawer>
+
+    </FrameLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>
