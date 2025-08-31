@@ -14,7 +14,7 @@ class Link(ABC):
         """
         Constructor for Link.
         """
-        self.logger =logger
+        self.logger = logger
 
     @abstractmethod
     def send(self, message: str) -> None:

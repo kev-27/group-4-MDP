@@ -8,8 +8,8 @@
 # BAUD_RATE = 115200
 
 # API DETAILS
-# API_IP = '192.168.2.11'  # IP address of laptop
-# API_PORT = 5000
+API_IP = '192.168.1.70'  # IP address of laptop
+API_PORT = 5000
 
 # ROBOT SETTINGS
 # OUTDOOR_BIG_TURN = False
