@@ -117,6 +117,8 @@ class AndroidLink(Link):
     def connect(self):
         """
         Connect to Andriod by Bluetooth
+
+        Currently hardcoded to Port 2
         """
         self.logger.info("Bluetooth connection started")
         try:

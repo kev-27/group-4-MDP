@@ -16,6 +16,8 @@ from settings import API_IP, API_PORT
 class PiAction:
     """
     Class that represents an action that the RPi needs to take.    
+
+    Takes in a key-value pair of category and context dependent value
     """
 
     def __init__(self, cat, value):
@@ -37,56 +39,90 @@ class PiAction:
 
 class RaspberryPi:
     """
-    Class that represents the Raspberry Pi.
+    Class that defines how rpi handles communication between other components.
+
+    Divide the following tasks into parallel processes:
+    - listen msg from android
+    - send msg to android
+    - listen msg from stm
+    - process movement command
+    - process actions for image rec: snap an image, stitch together images
     """
 
     def __init__(self):
         """
-        Initializes the Raspberry Pi.
+        Initialises the Raspberry Pi and multiprocessing Environment.
         """
+       
+        # ======= init env ========
         self.logger = logger 
         self.android_link = AndroidLink()
         self.stm_link = STMLink()
+        # =============================
 
-        self.manager = Manager()
+        # ========== multi-processing env ==================
 
-        self.android_dropped = self.manager.Event()
+        # Managers provide a way to create data which can be shared between
+        # different processes. A manager object controls a
+        # server process which manages shared objects. Other processes can
+        # access the shared objects by using proxies.
+
+        self.manager = Manager() # manages shared resources
+
+        self.android_dropped = self.manager.Event() # if android disconnects
+
         self.unpause = self.manager.Event()
 
         self.movement_lock = self.manager.Lock()
 
         self.android_queue = self.manager.Queue()  # Messages to send to Android
+
+
         # Messages that need to be processed by RPi
         self.rpi_action_queue = self.manager.Queue()
+
         # Messages that need to be processed by STM32, as well as snap commands
         self.command_queue = self.manager.Queue()
-        # X,Y,D coordinates of the robot after execution of a command
-        self.path_queue = self.manager.Queue()
 
-        self.proc_recv_android = None
-        self.proc_recv_stm32 = None
-        self.proc_android_sender = None
-        self.proc_command_follower = None
-        self.proc_rpi_action = None
-        self.rs_flag = False
-        self.success_obstacles = self.manager.list()
-        self.failed_obstacles = self.manager.list()
-        self.obstacles = self.manager.dict()
-        self.current_location = self.manager.dict()
+        # X,Y,D coordinates of the robot after execution of a command
+        # D: direction
+        self.path_queue = self.manager.Queue()
+        # ======================================================
+
+        
+        # ============= child processes ====================
+        self.proc_recv_android = None # listens incoming msgs from android
+        self.proc_recv_stm32 = None # listens incoming msgs from stm
+        self.proc_android_sender = None 
+        self.proc_command_follower = None # movement command
+        self.proc_rpi_action = None # snap images / stitching
+        # =================================================
+
+        # ========= flags =================
+        self.rs_flag = False # checks resets command RS00
         self.failed_attempt = False
+        # ============================
+
+        # =========== shared resources from Manager() ==========
+        self.success_obstacles = self.manager.list() # obstacles recognised
+        self.failed_obstacles = self.manager.list() # obstacles not recognised
+        self.obstacles = self.manager.dict() # known obstacles
+        self.current_location = self.manager.dict() # X, Y, D
+        # =========================================
 
     def start(self):
-        """Starts the RPi orchestrator"""
         try:
-            ### Start up initialization ###
-
+            # ========= init =========================
             self.android_link.connect()
             self.android_queue.put(AndroidMessage(
-                'info', 'You are connected to the RPi!'))
+                "info", "welcome message: connected to rpi"))
             self.stm_link.connect()
+            # Check whether image recognition and algorithm API server is up and running
             self.check_api()
+            # ======================================
 
-            # Define child processes
+            # Set the defined class methods as a parallel process
+            # The class methods are defined at the end
             self.proc_recv_android = Process(target=self.recv_android)
             self.proc_recv_stm32 = Process(target=self.recv_stm)
             self.proc_android_sender = Process(target=self.android_sender)
@@ -100,10 +136,7 @@ class RaspberryPi:
             self.proc_command_follower.start()
             self.proc_rpi_action.start()
 
-            self.logger.info("Child Processes started")
-
-            ### Start up complete ###
-
+            self.logger.info("Child Processes started.")
             # Send success message to Android
             self.android_queue.put(AndroidMessage('info', 'Robot is ready!'))
             self.android_queue.put(AndroidMessage('mode', 'path'))
@@ -113,9 +146,11 @@ class RaspberryPi:
             self.stop()
 
     def stop(self):
-        """Stops all processes on the RPi and disconnects gracefully with Android and STM32"""
+        """Stops all processes on the RPi and disconnects with Android and STM32"""
         self.android_link.disconnect()
+        self.logger.info("Android disconnected.")
         self.stm_link.disconnect()
+        self.logger.info("STM board disconnected.")
         self.logger.info("Program exited!")
 
     def reconnect_android(self):
@@ -168,7 +203,7 @@ class RaspberryPi:
         while True:
             msg_str: Optional[str] = None
             try:
-                msg_str = self.android_link.recv()
+                msg_str = self.android_link.recv() 
             except OSError:
                 self.android_dropped.set()
                 self.logger.debug("Event set: Android connection dropped")
@@ -181,18 +216,15 @@ class RaspberryPi:
             ## Command: Set obstacles ##
             if message['cat'] == "obstacles":
                 self.rpi_action_queue.put(PiAction(**message))
-                self.logger.debug(
-                    f"Set obstacles PiAction added to queue: {message}")
+                self.logger.debug(f"Set obstacles PiAction added to queue: {message}")
 
             ## Command: Start Moving ##
             elif message['cat'] == "control":
                 if message['value'] == "start":
                     # Check API
                     if not self.check_api():
-                        self.logger.error(
-                            "API is down! Start command aborted.")
-                        self.android_queue.put(AndroidMessage(
-                            'error', "API is down, start command aborted."))
+                        self.logger.error("Image / Algo API is down! Start command aborted.")
+                        self.android_queue.put(AndroidMessage('error', "Image / Algo API is down, start command aborted."))
 
                     # Commencing path following
                     if not self.command_queue.empty():
@@ -258,16 +290,16 @@ class RaspberryPi:
         [Child process] Responsible for retrieving messages from android_queue and sending them over the Android link. 
         """
         while True:
-            # Retrieve from queue
             try:
-                message: AndroidMessage = self.android_queue.get(timeout=0.5)
+                # Retrieve message from message queue
+                message: AndroidMessage = self.android_queue.get(timeout=0.5) # blocking, up to 0.5 seconds
             except queue.Empty:
                 continue
 
             try:
-                self.android_link.send(message)
+                self.android_link.send(message) # sends message to android 
             except OSError:
-                self.android_dropped.set()
+                self.android_dropped.set() # check for disconnect
                 self.logger.debug("Event set: Android dropped")
 
     def command_follower(self) -> None:
@@ -359,6 +391,8 @@ class RaspberryPi:
         RPi snaps an image and calls the API for image-rec.
         The response is then forwarded back to the android
         :param obstacle_id_with_signal: the current obstacle ID followed by underscore followed by signal
+
+        This needs to be re-written for PiCamera
         """
         obstacle_id, signal = obstacle_id_with_signal.split("_")
         self.logger.info(f"Capturing image for obstacle id: {obstacle_id}")
