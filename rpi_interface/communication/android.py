@@ -128,6 +128,7 @@ class AndroidLink(Link):
             # Initialize server socket
             self.server_sock = bluetooth.BluetoothSocket(bluetooth.RFCOMM)
             # self.server_sock.bind(("", bluetooth.PORT_ANY)) # gives any available port, in this case would be 1
+            self.server_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             self.server_sock.bind(("", 2))
             self.server_sock.listen(1)
 
