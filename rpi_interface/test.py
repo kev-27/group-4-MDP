@@ -15,7 +15,7 @@ from settings import API_IP, API_PORT
 
 class PiAction:
     """
-    Class that represents an action that the RPi needs to take.    
+    Wrapper for an action to be executed.    
 
     Takes in a key-value pair of category and context dependent value
     """
@@ -40,6 +40,8 @@ class PiAction:
 class RaspberryPi:
     """
     Class that defines how rpi handles communication between other components.
+
+    It contains many large monolithic methods that may require refactoring if time permits
 
     Divide the following tasks into parallel processes:
     - listen msg from android
@@ -247,6 +249,8 @@ class RaspberryPi:
     def recv_stm(self) -> None:
         """
         [Child Process] Receive acknowledgement messages from STM32, and release the movement lock
+
+        The very first command is presumed to be RS00.
         """
         while True:
 
@@ -263,16 +267,14 @@ class RaspberryPi:
                         self.retrylock.release()
                     except:
                         pass
-                    self.logger.debug(
-                        "ACK from STM32 received, movement lock released.")
+                    self.logger.debug("ACK from STM32 received, movement lock released.")
 
-                    cur_location = self.path_queue.get_nowait()
+                    cur_location = self.path_queue.get_nowait() # non-blocking
 
                     self.current_location['x'] = cur_location['x']
                     self.current_location['y'] = cur_location['y']
                     self.current_location['d'] = cur_location['d']
-                    self.logger.info(
-                        f"self.current_location = {self.current_location}")
+                    self.logger.info(f"self.current_location = {self.current_location}")
                     self.android_queue.put(AndroidMessage('location', {
                         "x": cur_location['x'],
                         "y": cur_location['y'],
@@ -282,8 +284,7 @@ class RaspberryPi:
                 except Exception:
                     self.logger.warning("Tried to release a released lock!")
             else:
-                self.logger.warning(
-                    f"Ignored unknown message from STM: {message}")
+                self.logger.warning(f"Ignored unknown message from STM: {message}")
 
     def android_sender(self) -> None:
         """
@@ -304,7 +305,14 @@ class RaspberryPi:
 
     def command_follower(self) -> None:
         """
-        [Child Process] 
+        [Child Process] processes commands in command_queue.
+
+        Just switch statements
+
+        There are three types of commands:
+        - movement commands to send to STM32
+        - "snapping" an image: i.e. taking a still image of obstacle
+        - finish command signalling completion of path in the maze
         """
         while True:
             # Retrieve next movement command
@@ -323,6 +331,7 @@ class RaspberryPi:
             self.movement_lock.acquire()
 
             # STM32 Commands - Send straight to STM32
+            # needs refactoring, consts being defined within class methods is goofy
             stm32_prefixes = ("FS", "BS", "FW", "BW", "FL", "FR", "BL",
                               "BR", "TL", "TR", "A", "C", "DT", "STOP", "ZZ", "RS")
             if command.startswith(stm32_prefixes):
@@ -338,12 +347,10 @@ class RaspberryPi:
 
             # End of path
             elif command == "FIN":
-                self.logger.info(
-                    f"At FIN, self.failed_obstacles: {self.failed_obstacles}")
-                self.logger.info(
-                    f"At FIN, self.current_location: {self.current_location}")
-                if len(self.failed_obstacles) != 0 and self.failed_attempt == False:
+                self.logger.info(f"At FIN, self.failed_obstacles: {self.failed_obstacles}")
+                self.logger.info(f"At FIN, self.current_location: {self.current_location}")
 
+                if len(self.failed_obstacles) != 0 and self.failed_attempt == False:
                     new_obstacle_list = list(self.failed_obstacles)
                     for i in list(self.success_obstacles):
                         # {'x': 5, 'y': 11, 'id': 1, 'd': 4}
@@ -361,8 +368,7 @@ class RaspberryPi:
                 self.unpause.clear()
                 self.movement_lock.release()
                 self.logger.info("Commands queue finished.")
-                self.android_queue.put(AndroidMessage(
-                    "info", "Commands queue finished."))
+                self.android_queue.put(AndroidMessage("info", "Commands queue finished."))
                 self.android_queue.put(AndroidMessage("status", "finished"))
                 self.rpi_action_queue.put(PiAction(cat="stitch", value=""))
             else:
@@ -370,7 +376,12 @@ class RaspberryPi:
 
     def rpi_action(self):
         """
-        [Child Process] 
+        [Child Process] process to handle image recognition and path finding tasks
+
+        Only three categories are accepted:
+        - obstacles: position of obstacle
+        - snap: taking still image
+        - stitch: compile images together
         """
         while True:
             action: PiAction = self.rpi_action_queue.get()
@@ -392,7 +403,8 @@ class RaspberryPi:
         The response is then forwarded back to the android
         :param obstacle_id_with_signal: the current obstacle ID followed by underscore followed by signal
 
-        This needs to be re-written for PiCamera
+        :warning: This needs to be re-written for PiCamera, as the current implementation
+        is for the configuration of libcamera
         """
         obstacle_id, signal = obstacle_id_with_signal.split("_")
         self.logger.info(f"Capturing image for obstacle id: {obstacle_id}")
