@@ -118,7 +118,7 @@ class AndroidLink(Link):
         """
         Connect to Andriod by Bluetooth
 
-        Currently hardcoded to Port 2
+        Hardcoding a Port number may fail, to test again
         """
         self.logger.info("Bluetooth connection started")
         try:
@@ -127,13 +127,13 @@ class AndroidLink(Link):
 
             # Initialize server socket
             self.server_sock = bluetooth.BluetoothSocket(bluetooth.RFCOMM)
-            # self.server_sock.bind(("", bluetooth.PORT_ANY))
-            self.server_sock.bind(("", 2))
+            self.server_sock.bind(("", bluetooth.PORT_ANY))
+            # self.server_sock.bind(("", 2))
             self.server_sock.listen(1)
 
             # Parameters
-            # port = self.server_sock.getsockname()[1]
-            port = 2
+            port = self.server_sock.getsockname()[1]
+            # port = 2
             uuid = 'b2a5ef6a-ec41-45b5-8aae-0f9ff16c09ce'
 
             # Advertise

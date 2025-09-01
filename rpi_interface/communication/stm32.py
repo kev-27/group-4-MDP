@@ -26,6 +26,8 @@ class STMLink(Link):
     - `TR--`: Steer right indefinitely
     - `STOP`: Stop all servos
 
+    ---
+
     ### STM32 to RPi
     After every command received on the STM32, an acknowledgement (string: `ACK`) must be sent back to the RPi.
     This signals to the RPi that the STM32 has completed the command, and is ready for the next command.

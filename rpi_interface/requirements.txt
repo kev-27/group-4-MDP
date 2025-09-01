@@ -4,6 +4,3 @@ picamera==1.13
 PyBluez==0.23
 pyserial==3.5
 requests~=2.27.1
-pydbus==0.6.0
-PyGObject
-pycairo
