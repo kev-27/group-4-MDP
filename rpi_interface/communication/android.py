@@ -113,47 +113,75 @@ class AndroidLink(Link):
         super().__init__()
         self.client_sock = None
         self.server_sock = None
-
+    
     def connect(self):
         """
-        Connect to Andriod by Bluetooth
+        Connect to Android via Bluetooth robustly.
 
-        Hardcoded to port 2 because it is already pair to that port
+        - Automatically chooses an available RFCOMM channel.
+        - Cleans up leftover sockets from previous runs.
+        - Ensures the Pi is discoverable.
         """
         self.logger.info("Bluetooth connection started")
+
+        # Clean up any previous sockets
+        if self.client_sock:
+            try:
+                self.client_sock.close()
+            except Exception:
+                pass
+            self.client_sock = None
+        if self.server_sock:
+            try:
+                self.server_sock.close()
+            except Exception:
+                pass
+            self.server_sock = None
+
         try:
-            # Set RPi to be discoverable in order for service to be advertisable
+            # Make the Pi discoverable
             os.system("sudo hciconfig hci0 piscan")
 
             # Initialize server socket
             self.server_sock = bluetooth.BluetoothSocket(bluetooth.RFCOMM)
-            # self.server_sock.bind(("", bluetooth.PORT_ANY)) # gives any available port, in this case would be 1
             self.server_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-            self.server_sock.bind(("", 2))
+            self.server_sock.bind(("", bluetooth.PORT_ANY))  # OS chooses free channel
             self.server_sock.listen(1)
 
-            # Parameters
-            # port = self.server_sock.getsockname()[1]
-            port = 2
+            port = self.server_sock.getsockname()[1]  # get actual channel
             uuid = 'b2a5ef6a-ec41-45b5-8aae-0f9ff16c09ce'
 
-            # Advertise
+            # Advertise service so Android can discover it
             bluetooth.advertise_service(
-                self.server_sock, 
-                "mdpgrp4",  
-                service_id=uuid,  # custom unique identifier
-                service_classes=[uuid, bluetooth.SERIAL_PORT_CLASS], 
-                profiles=[bluetooth.SERIAL_PORT_PROFILE])
+                self.server_sock,
+                "mdpgrp4",
+                service_id=uuid,
+                service_classes=[uuid, bluetooth.SERIAL_PORT_CLASS],
+                profiles=[bluetooth.SERIAL_PORT_PROFILE]
+            )
 
-            self.logger.info(
-                f"Awaiting Bluetooth connection on RFCOMM CHANNEL {port}")
+            self.logger.info(f"Awaiting Bluetooth connection on RFCOMM CHANNEL {port}")
             self.client_sock, client_info = self.server_sock.accept()
             self.logger.info(f"Accepted connection from: {client_info}")
 
         except Exception as e:
             self.logger.error(f"Error in Bluetooth link connection: {e}")
-            self.server_sock.close()
-            self.client_sock.close()
+
+            # Clean up on error
+            if self.client_sock:
+                try:
+                    self.client_sock.close()
+                except Exception:
+                    pass
+                self.client_sock = None
+            if self.server_sock:
+                try:
+                    self.server_sock.close()
+                except Exception:
+                    pass
+                self.server_sock = None
+
+     
 
     def disconnect(self):
         """Disconnect from Android Bluetooth connection and shutdown all the sockets established"""
