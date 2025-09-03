@@ -1,28 +1,7 @@
-# Fast Launch
-Now deployed In huggingface https://huggingface.co/spaces/Mahiruoshi/mdpg4
-## Test directly
-```
-import requests
-
-url = "https://mahiruoshi-mdpg4.hf.space/"  # 你的 Space 地址
-file_path = "20230825_122540_jpg.rf.f0620856e7afdbd116ceffdfd512b03a.jpg"
-
-with open(file_path, "rb") as f:
-    files = {"file": f}
-    response = requests.post(url, files=files)
-
-print("Status:", response.status_code)
-try:
-    print("Response:", response.json())
-except:
-    print("Response:", response.text)
-```
-##
-You can use docker following huggingface instructions directly
-
-## Local Implement
-Base on Yolov5
+# Deploy in your labtop
+The images with labels are now saved into results folder. Please collect them.
 ```bash
+# Afater cloning this branch
 pip install -r requirements.txt
 ```
 # Inference Server
@@ -35,7 +14,7 @@ Test script
 ```bash
 import requests
 
-SERVER_URL = "http://localhost:5000"
+SERVER_URL = "http://localhost:7860"
 
 image_file = "20230825_122540_jpg.rf.f0620856e7afdbd116ceffdfd512b03a.jpg"
 
@@ -100,6 +79,27 @@ data.yaml
 !cp "Week_8.pt" "best.pt"
 ```
 Train
+
+# Demo Web
+Now deployed In huggingface https://huggingface.co/spaces/Mahiruoshi/mdpg4
+## Test directly
+```
+import requests
+
+url = "https://mahiruoshi-mdpg4.hf.space/"  # 你的 Space 地址
+file_path = "20230825_122540_jpg.rf.f0620856e7afdbd116ceffdfd512b03a.jpg"
+
+with open(file_path, "rb") as f:
+    files = {"file": f}
+    response = requests.post(url, files=files)
+
+print("Status:", response.status_code)
+try:
+    print("Response:", response.json())
+except:
+    print("Response:", response.text)
+```
+
 ```bash
 # First time
 python train.py --img 416 --batch 128 --epochs 150 --data E:/workspace/mdp/data.yaml --weights best.pt --cache
