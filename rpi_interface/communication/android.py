@@ -199,7 +199,7 @@ class AndroidLink(Link):
     def send(self, message: AndroidMessage):
         """Send message to Android"""
         try:
-            self.client_sock.send(f"{message.jsonify}\n".encode("ascii"))
+            self.client_sock.send(f"{message.jsonify}\n".encode("utf-8"))
             self.logger.debug(f"Sent to Android: {message.jsonify}")
         except OSError as e:
             self.logger.error(f"Error sending message to Android: {e}")
@@ -209,7 +209,7 @@ class AndroidLink(Link):
         """Receive message from Android"""
         try:
             tmp = self.client_sock.recv(1024)
-            message = tmp.decode("ascii").strip()
+            message = tmp.decode("utf-8").strip()
             self.logger.debug(message)
             self.logger.debug(f"Received from Android: {message}")
             return message

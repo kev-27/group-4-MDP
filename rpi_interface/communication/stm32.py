@@ -53,20 +53,20 @@ class STMLink(Link):
         self.logger.info("Disconnected from STM32")
 
     def send(self, message: str) -> None:
-        """Send a message to STM32, ascii encoded
+        """Send a message to STM32, utf-8 encoded
 
         Args:
             message (str): message to send
         """
-        self.serial_link.write(f"{message}".encode("ascii"))
+        self.serial_link.write(f"{message}".encode("utf-8"))
         self.logger.debug(f"Sent to STM32: {message}")
 
     def recv(self) -> Optional[str]:
-        """Receive a message from STM32, ascii decoded
+        """Receive a message from STM32, utf-8 decoded
 
         Returns:
             Optional[str]: message received
         """
-        message = self.serial_link.readline().strip().decode("ascii")
+        message = self.serial_link.readline().strip().decode("utf-8")
         self.logger.debug(f"Received from STM32: {message}")
         return message
