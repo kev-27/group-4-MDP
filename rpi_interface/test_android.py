@@ -29,4 +29,3 @@ def test_android_connection():
 
 if __name__ == "__main__":
     test_android_connection()
-

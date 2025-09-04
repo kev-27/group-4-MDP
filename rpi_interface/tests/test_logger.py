@@ -1,12 +1,14 @@
 import logging
 from logger.logger import setup_logging, logger
 
+
 def init_logging():
     setup_logging()
 
+
 def test_logger_basic_levels(caplog):
     with caplog.at_level(logging.INFO):
-        logger.debug("debug message")      # should not appear
+        logger.debug("debug message")  # should not appear
         logger.info("info message")
         logger.warning("warning message")
         logger.error("error message")
@@ -17,6 +19,7 @@ def test_logger_basic_levels(caplog):
     assert "error message" in caplog.text
     assert "critical message" in caplog.text
     assert "debug message" not in caplog.text
+
 
 def test_logger_exception(caplog):
     with caplog.at_level(logging.ERROR):

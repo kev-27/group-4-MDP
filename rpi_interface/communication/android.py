@@ -5,6 +5,7 @@ from typing import Optional
 import bluetooth
 from communication.link import Link
 
+
 class AndroidMessage:
     """
     Class for communicating with Android tablet over Bluetooth connection.
@@ -41,11 +42,11 @@ class AndroidMessage:
         Returns the message as a JSON string.
         :return: JSON string representation of the message.
         """
-        return json.dumps({'cat': self._cat, 'value': self._value})
+        return json.dumps({"cat": self._cat, "value": self._value})
 
 
 class AndroidLink(Link):
-    """Class for communicating with Android tablet over Bluetooth connection. 
+    """Class for communicating with Android tablet over Bluetooth connection.
 
     ## General Format
     Messages between the Android app and Raspi will be in the following format:
@@ -60,7 +61,7 @@ class AndroidLink(Link):
     - `image-rec`: image recognition results
     - `mode`: the current mode of the robot (`manual` or `path`)
     - `status`: status updates of the robot (`running` or `finished`)
-    - `obstacle`: list of obstacles 
+    - `obstacle`: list of obstacles
 
     ## Android to RPi
 
@@ -88,7 +89,7 @@ class AndroidLink(Link):
     {"cat": "error", "value": "Command queue is empty, did you set obstacles?"}
     ```
 
-    ### Image Recognition 
+    ### Image Recognition
 
     #### RPi to Android
     ```json
@@ -113,7 +114,7 @@ class AndroidLink(Link):
         super().__init__()
         self.client_sock = None
         self.server_sock = None
-    
+
     def connect(self):
         """
         Connect to Android via Bluetooth robustly.
@@ -149,7 +150,7 @@ class AndroidLink(Link):
             self.server_sock.listen(1)
 
             port = self.server_sock.getsockname()[1]  # get actual channel
-            uuid = 'b2a5ef6a-ec41-45b5-8aae-0f9ff16c09ce'
+            uuid = "b2a5ef6a-ec41-45b5-8aae-0f9ff16c09ce"
 
             # Advertise service so Android can discover it
             bluetooth.advertise_service(
@@ -157,7 +158,7 @@ class AndroidLink(Link):
                 "mdpgrp4",
                 service_id=uuid,
                 service_classes=[uuid, bluetooth.SERIAL_PORT_CLASS],
-                profiles=[bluetooth.SERIAL_PORT_PROFILE]
+                profiles=[bluetooth.SERIAL_PORT_PROFILE],
             )
 
             self.logger.info(f"Awaiting Bluetooth connection on RFCOMM CHANNEL {port}")
@@ -180,8 +181,6 @@ class AndroidLink(Link):
                 except Exception:
                     pass
                 self.server_sock = None
-
-     
 
     def disconnect(self):
         """Disconnect from Android Bluetooth connection and shutdown all the sockets established"""

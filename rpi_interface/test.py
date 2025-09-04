@@ -15,7 +15,7 @@ from settings import API_IP, API_PORT
 
 class PiAction:
     """
-    Wrapper for an action to be executed.    
+    Wrapper for an action to be executed.
 
     Takes in a key-value pair of category and context dependent value
     """
@@ -55,9 +55,9 @@ class RaspberryPi:
         """
         Initialises the Raspberry Pi and multiprocessing Environment.
         """
-       
+
         # ======= init env ========
-        self.logger = logger 
+        self.logger = logger
         self.android_link = AndroidLink()
         self.stm_link = STMLink()
         # =============================
@@ -69,16 +69,15 @@ class RaspberryPi:
         # server process which manages shared objects. Other processes can
         # access the shared objects by using proxies.
 
-        self.manager = Manager() # manages shared resources
+        self.manager = Manager()  # manages shared resources
 
-        self.android_dropped = self.manager.Event() # if android disconnects
+        self.android_dropped = self.manager.Event()  # if android disconnects
 
         self.unpause = self.manager.Event()
 
         self.movement_lock = self.manager.Lock()
 
         self.android_queue = self.manager.Queue()  # Messages to send to Android
-
 
         # Messages that need to be processed by RPi
         self.rpi_action_queue = self.manager.Queue()
@@ -91,36 +90,36 @@ class RaspberryPi:
         self.path_queue = self.manager.Queue()
         # ======================================================
 
-        
         # ============= child processes ====================
-        self.proc_recv_android = None # listens incoming msgs from android
-        self.proc_recv_stm32 = None # listens incoming msgs from stm
-        self.proc_android_sender = None 
-        self.proc_command_follower = None # movement command
-        self.proc_rpi_action = None # snap images / stitching
+        self.proc_recv_android = None  # listens incoming msgs from android
+        self.proc_recv_stm32 = None  # listens incoming msgs from stm
+        self.proc_android_sender = None
+        self.proc_command_follower = None  # movement command
+        self.proc_rpi_action = None  # snap images / stitching
         # =================================================
 
         # ========= flags =================
-        self.rs_flag = False # checks resets command RS00
+        self.rs_flag = False  # checks resets command RS00
         self.failed_attempt = False
         # ============================
 
         # =========== shared resources from Manager() ==========
-        self.success_obstacles = self.manager.list() # obstacles recognised
-        self.failed_obstacles = self.manager.list() # obstacles not recognised
-        self.obstacles = self.manager.dict() # known obstacles
-        self.current_location = self.manager.dict() # X, Y, D
+        self.success_obstacles = self.manager.list()  # obstacles recognised
+        self.failed_obstacles = self.manager.list()  # obstacles not recognised
+        self.obstacles = self.manager.dict()  # known obstacles
+        self.current_location = self.manager.dict()  # X, Y, D
         # =========================================
 
     def start(self):
         try:
             # ========= init =========================
             self.android_link.connect()
-            self.android_queue.put(AndroidMessage(
-                "info", "welcome message: connected to rpi"))
+            self.android_queue.put(
+                AndroidMessage("info", "welcome message: connected to rpi")
+            )
             self.stm_link.connect()
             # Check whether image recognition and algorithm API server is up and running
-            self.check_api()
+            # self.check_api() # not implemented
             # ======================================
 
             # Set the defined class methods as a parallel process
@@ -140,8 +139,8 @@ class RaspberryPi:
 
             self.logger.info("Child Processes started.")
             # Send success message to Android
-            self.android_queue.put(AndroidMessage('info', 'Robot is ready!'))
-            self.android_queue.put(AndroidMessage('mode', 'path'))
+            self.android_queue.put(AndroidMessage("info", "Robot is ready!"))
+            self.android_queue.put(AndroidMessage("mode", "path"))
             self.reconnect_android()
 
         except KeyboardInterrupt:
@@ -192,9 +191,8 @@ class RaspberryPi:
             self.proc_android_sender.start()
 
             self.logger.info("Android child processes restarted")
-            self.android_queue.put(AndroidMessage(
-                "info", "You are reconnected!"))
-            self.android_queue.put(AndroidMessage('mode', 'path'))
+            self.android_queue.put(AndroidMessage("info", "You are reconnected!"))
+            self.android_queue.put(AndroidMessage("mode", "path"))
 
             self.android_dropped.clear()
 
@@ -205,28 +203,36 @@ class RaspberryPi:
         while True:
             msg_str: Optional[str] = None
             try:
-                msg_str = self.android_link.recv() 
+                msg_str = self.android_link.recv()
             except OSError:
                 self.android_dropped.set()
                 self.logger.debug("Event set: Android connection dropped")
 
             if msg_str is None:
+                self.logger.debug("in recv_android: msg is none")
                 continue
 
             message: dict = json.loads(msg_str)
 
             ## Command: Set obstacles ##
-            if message['cat'] == "obstacles":
+            if message["cat"] == "obstacles":
                 self.rpi_action_queue.put(PiAction(**message))
                 self.logger.debug(f"Set obstacles PiAction added to queue: {message}")
 
             ## Command: Start Moving ##
-            elif message['cat'] == "control":
-                if message['value'] == "start":
+            elif message["cat"] == "control":
+                if message["value"] == "start":
                     # Check API
                     if not self.check_api():
-                        self.logger.error("Image / Algo API is down! Start command aborted.")
-                        self.android_queue.put(AndroidMessage('error', "Image / Algo API is down, start command aborted."))
+                        self.logger.error(
+                            "Image / Algo API is down! Start command aborted."
+                        )
+                        self.android_queue.put(
+                            AndroidMessage(
+                                "error",
+                                "Image / Algo API is down, start command aborted.",
+                            )
+                        )
 
                     # Commencing path following
                     if not self.command_queue.empty():
@@ -235,16 +241,22 @@ class RaspberryPi:
                         # Main trigger to start movement #
                         self.unpause.set()
                         self.logger.info(
-                            "Start command received, starting robot on path!")
-                        self.android_queue.put(AndroidMessage(
-                            'info', 'Starting robot on path!'))
+                            "Start command received, starting robot on path!"
+                        )
                         self.android_queue.put(
-                            AndroidMessage('status', 'running'))
+                            AndroidMessage("info", "Starting robot on path!")
+                        )
+                        self.android_queue.put(AndroidMessage("status", "running"))
                     else:
                         self.logger.warning(
-                            "The command queue is empty, please set obstacles.")
-                        self.android_queue.put(AndroidMessage(
-                            "error", "Command queue is empty, did you set obstacles?"))
+                            "The command queue is empty, please set obstacles."
+                        )
+                        self.android_queue.put(
+                            AndroidMessage(
+                                "error",
+                                "Command queue is empty, did you set obstacles?",
+                            )
+                        )
 
     def recv_stm(self) -> None:
         """
@@ -253,7 +265,6 @@ class RaspberryPi:
         The very first command is presumed to be RS00.
         """
         while True:
-
             message: str = self.stm_link.recv()
 
             if message.startswith("ACK"):
@@ -267,19 +278,26 @@ class RaspberryPi:
                         self.retrylock.release()
                     except:
                         pass
-                    self.logger.debug("ACK from STM32 received, movement lock released.")
+                    self.logger.debug(
+                        "ACK from STM32 received, movement lock released."
+                    )
 
-                    cur_location = self.path_queue.get_nowait() # non-blocking
+                    cur_location = self.path_queue.get_nowait()  # non-blocking
 
-                    self.current_location['x'] = cur_location['x']
-                    self.current_location['y'] = cur_location['y']
-                    self.current_location['d'] = cur_location['d']
+                    self.current_location["x"] = cur_location["x"]
+                    self.current_location["y"] = cur_location["y"]
+                    self.current_location["d"] = cur_location["d"]
                     self.logger.info(f"self.current_location = {self.current_location}")
-                    self.android_queue.put(AndroidMessage('location', {
-                        "x": cur_location['x'],
-                        "y": cur_location['y'],
-                        "d": cur_location['d'],
-                    }))
+                    self.android_queue.put(
+                        AndroidMessage(
+                            "location",
+                            {
+                                "x": cur_location["x"],
+                                "y": cur_location["y"],
+                                "d": cur_location["d"],
+                            },
+                        )
+                    )
 
                 except Exception:
                     self.logger.warning("Tried to release a released lock!")
@@ -288,19 +306,21 @@ class RaspberryPi:
 
     def android_sender(self) -> None:
         """
-        [Child process] Responsible for retrieving messages from android_queue and sending them over the Android link. 
+        [Child process] Responsible for retrieving messages from android_queue and sending them over the Android link.
         """
         while True:
             try:
                 # Retrieve message from message queue
-                message: AndroidMessage = self.android_queue.get(timeout=0.5) # blocking, up to 0.5 seconds
+                message: AndroidMessage = self.android_queue.get(
+                    timeout=0.5
+                )  # blocking, up to 0.5 seconds
             except queue.Empty:
                 continue
 
             try:
-                self.android_link.send(message) # sends message to android 
+                self.android_link.send(message)  # sends message to android
             except OSError:
-                self.android_dropped.set() # check for disconnect
+                self.android_dropped.set()  # check for disconnect
                 self.logger.debug("Event set: Android dropped")
 
     def command_follower(self) -> None:
@@ -332,8 +352,24 @@ class RaspberryPi:
 
             # STM32 Commands - Send straight to STM32
             # needs refactoring, consts being defined within class methods is goofy
-            stm32_prefixes = ("FS", "BS", "FW", "BW", "FL", "FR", "BL",
-                              "BR", "TL", "TR", "A", "C", "DT", "STOP", "ZZ", "RS")
+            stm32_prefixes = (
+                "FS",
+                "BS",
+                "FW",
+                "BW",
+                "FL",
+                "FR",
+                "BL",
+                "BR",
+                "TL",
+                "TR",
+                "A",
+                "C",
+                "DT",
+                "STOP",
+                "ZZ",
+                "RS",
+            )
             if command.startswith(stm32_prefixes):
                 self.stm_link.send(command)
                 self.logger.debug(f"Sending to STM32: {command}")
@@ -343,24 +379,34 @@ class RaspberryPi:
                 obstacle_id_with_signal = command.replace("SNAP", "")
 
                 self.rpi_action_queue.put(
-                    PiAction(cat="snap", value=obstacle_id_with_signal))
+                    PiAction(cat="snap", value=obstacle_id_with_signal)
+                )
 
             # End of path
             elif command == "FIN":
-                self.logger.info(f"At FIN, self.failed_obstacles: {self.failed_obstacles}")
-                self.logger.info(f"At FIN, self.current_location: {self.current_location}")
+                self.logger.info(
+                    f"At FIN, self.failed_obstacles: {self.failed_obstacles}"
+                )
+                self.logger.info(
+                    f"At FIN, self.current_location: {self.current_location}"
+                )
 
                 if len(self.failed_obstacles) != 0 and self.failed_attempt == False:
                     new_obstacle_list = list(self.failed_obstacles)
                     for i in list(self.success_obstacles):
                         # {'x': 5, 'y': 11, 'id': 1, 'd': 4}
-                        i['d'] = 8
+                        i["d"] = 8
                         new_obstacle_list.append(i)
 
                     self.logger.info("Attempting to go to failed obstacles")
                     self.failed_attempt = True
-                    self.request_algo({'obstacles': new_obstacle_list, 'mode': '0'},
-                                      self.current_location['x'], self.current_location['y'], self.current_location['d'], retrying=True)
+                    self.request_algo(
+                        {"obstacles": new_obstacle_list, "mode": "0"},
+                        self.current_location["x"],
+                        self.current_location["y"],
+                        self.current_location["d"],
+                        retrying=True,
+                    )
                     self.retrylock = self.manager.Lock()
                     self.movement_lock.release()
                     continue
@@ -368,7 +414,9 @@ class RaspberryPi:
                 self.unpause.clear()
                 self.movement_lock.release()
                 self.logger.info("Commands queue finished.")
-                self.android_queue.put(AndroidMessage("info", "Commands queue finished."))
+                self.android_queue.put(
+                    AndroidMessage("info", "Commands queue finished.")
+                )
                 self.android_queue.put(AndroidMessage("status", "finished"))
                 self.rpi_action_queue.put(PiAction(cat="stitch", value=""))
             else:
@@ -386,11 +434,12 @@ class RaspberryPi:
         while True:
             action: PiAction = self.rpi_action_queue.get()
             self.logger.debug(
-                f"PiAction retrieved from queue: {action.cat} {action.value}")
+                f"PiAction retrieved from queue: {action.cat} {action.value}"
+            )
 
             if action.cat == "obstacles":
-                for obs in action.value['obstacles']:
-                    self.obstacles[obs['id']] = obs
+                for obs in action.value["obstacles"]:
+                    self.obstacles[obs["id"]] = obs
                 self.request_algo(action.value)
             elif action.cat == "snap":
                 self.snap_and_rec(obstacle_id_with_signal=action.value)
@@ -408,8 +457,9 @@ class RaspberryPi:
         """
         obstacle_id, signal = obstacle_id_with_signal.split("_")
         self.logger.info(f"Capturing image for obstacle id: {obstacle_id}")
-        self.android_queue.put(AndroidMessage(
-            "info", f"Capturing image for obstacle id: {obstacle_id}"))
+        self.android_queue.put(
+            AndroidMessage("info", f"Capturing image for obstacle id: {obstacle_id}")
+        )
         url = f"http://{API_IP}:{API_PORT}/image"
         filename = f"{int(time.time())}_{obstacle_id}_{signal}.jpg"
 
@@ -418,13 +468,90 @@ class RaspberryPi:
         Home_Files.append(os.getlogin())
         config_file = "/home/" + Home_Files[0] + "/" + con_file
 
-        extns = ['jpg', 'png', 'bmp', 'rgb', 'yuv420', 'raw']
-        shutters = [-2000, -1600, -1250, -1000, -800, -640, -500, -400, -320, -288, -250, -240, -200, -160, -144, -125, -120, -100, -96, -80, -60, -50, -48, -40, -30, -25, -20, -
-                    15, -13, -10, -8, -6, -5, -4, -3, 0.4, 0.5, 0.6, 0.8, 1, 1.1, 1.2, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 15, 20, 25, 30, 40, 50, 60, 75, 100, 112, 120, 150, 200, 220, 230, 239, 435]
-        meters = ['centre', 'spot', 'average']
-        awbs = ['off', 'auto', 'incandescent', 'tungsten',
-                'fluorescent', 'indoor', 'daylight', 'cloudy']
-        denoises = ['off', 'cdn_off', 'cdn_fast', 'cdn_hq']
+        extns = ["jpg", "png", "bmp", "rgb", "yuv420", "raw"]
+        shutters = [
+            -2000,
+            -1600,
+            -1250,
+            -1000,
+            -800,
+            -640,
+            -500,
+            -400,
+            -320,
+            -288,
+            -250,
+            -240,
+            -200,
+            -160,
+            -144,
+            -125,
+            -120,
+            -100,
+            -96,
+            -80,
+            -60,
+            -50,
+            -48,
+            -40,
+            -30,
+            -25,
+            -20,
+            -15,
+            -13,
+            -10,
+            -8,
+            -6,
+            -5,
+            -4,
+            -3,
+            0.4,
+            0.5,
+            0.6,
+            0.8,
+            1,
+            1.1,
+            1.2,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            15,
+            20,
+            25,
+            30,
+            40,
+            50,
+            60,
+            75,
+            100,
+            112,
+            120,
+            150,
+            200,
+            220,
+            230,
+            239,
+            435,
+        ]
+        meters = ["centre", "spot", "average"]
+        awbs = [
+            "off",
+            "auto",
+            "incandescent",
+            "tungsten",
+            "fluorescent",
+            "indoor",
+            "daylight",
+            "cloudy",
+        ]
+        denoises = ["off", "cdn_off", "cdn_fast", "cdn_hq"]
 
         config = []
         with open(config_file, "r") as file:
@@ -452,20 +579,22 @@ class RaspberryPi:
         retry_count = 0
 
         while True:
-
             retry_count += 1
 
             shutter = shutters[speed]
             if shutter < 0:
-                shutter = abs(1/shutter)
+                shutter = abs(1 / shutter)
             sspeed = int(shutter * 1000000)
             if (shutter * 1000000) - int(shutter * 1000000) > 0.5:
                 sspeed += 1
 
-            rpistr = "libcamera-still -e " + \
-                extns[extn] + " -n -t 500 -o " + filename
-            rpistr += " --brightness " + \
-                str(brightness/100) + " --contrast " + str(contrast/100)
+            rpistr = "libcamera-still -e " + extns[extn] + " -n -t 500 -o " + filename
+            rpistr += (
+                " --brightness "
+                + str(brightness / 100)
+                + " --contrast "
+                + str(contrast / 100)
+            )
             rpistr += " --shutter " + str(sspeed)
             if ev != 0:
                 rpistr += " --ev " + str(ev)
@@ -474,12 +603,12 @@ class RaspberryPi:
             else:
                 rpistr += " --gain " + str(gain)
                 if awb == 0:
-                    rpistr += " --awbgains " + str(red/10) + "," + str(blue/10)
+                    rpistr += " --awbgains " + str(red / 10) + "," + str(blue / 10)
                 else:
                     rpistr += " --awb " + awbs[awb]
             rpistr += " --metering " + meters[meter]
-            rpistr += " --saturation " + str(saturation/10)
-            rpistr += " --sharpness " + str(sharpness/10)
+            rpistr += " --saturation " + str(saturation / 10)
+            rpistr += " --sharpness " + str(sharpness / 10)
             rpistr += " --quality " + str(quality)
             rpistr += " --denoise " + denoises[denoise]
             rpistr += " --metadata - --metadata-format txt >> PiLibtext.txt"
@@ -489,18 +618,20 @@ class RaspberryPi:
             self.logger.debug("Requesting from image API")
 
             response = requests.post(
-                url, files={"file": (filename, open(filename, 'rb'))})
+                url, files={"file": (filename, open(filename, "rb"))}
+            )
 
             if response.status_code != 200:
                 self.logger.error(
-                    "Something went wrong when requesting path from image-rec API. Please try again.")
+                    "Something went wrong when requesting path from image-rec API. Please try again."
+                )
                 return
 
             results = json.loads(response.content)
 
             # Higher brightness retry
 
-            if results['image_id'] != 'NA' or retry_count > 6:
+            if results["image_id"] != "NA" or retry_count > 6:
                 break
             elif retry_count > 3:
                 self.logger.info(f"Image recognition results: {results}")
@@ -521,19 +652,18 @@ class RaspberryPi:
         self.logger.info(f"results: {results}")
         self.logger.info(f"self.obstacles: {self.obstacles}")
         self.logger.info(
-            f"Image recognition results: {results} ({SYMBOL_MAP.get(results['image_id'])})")
+            f"Image recognition results: {results} ({SYMBOL_MAP.get(results['image_id'])})"
+        )
 
-        if results['image_id'] == 'NA':
-            self.failed_obstacles.append(
-                self.obstacles[int(results['obstacle_id'])])
+        if results["image_id"] == "NA":
+            self.failed_obstacles.append(self.obstacles[int(results["obstacle_id"])])
             self.logger.info(
-                f"Added Obstacle {results['obstacle_id']} to failed obstacles.")
+                f"Added Obstacle {results['obstacle_id']} to failed obstacles."
+            )
             self.logger.info(f"self.failed_obstacles: {self.failed_obstacles}")
         else:
-            self.success_obstacles.append(
-                self.obstacles[int(results['obstacle_id'])])
-            self.logger.info(
-                f"self.success_obstacles: {self.success_obstacles}")
+            self.success_obstacles.append(self.obstacles[int(results["obstacle_id"])])
+            self.logger.info(f"self.success_obstacles: {self.success_obstacles}")
         self.android_queue.put(AndroidMessage("image-rec", results))
 
     def request_algo(self, data, robot_x=1, robot_y=1, robot_dir=0, retrying=False):
@@ -542,26 +672,35 @@ class RaspberryPi:
         The received commands and path are then queued in the respective queues
         """
         self.logger.info("Requesting path from algo...")
-        self.android_queue.put(AndroidMessage(
-            "info", "Requesting path from algo..."))
+        self.android_queue.put(AndroidMessage("info", "Requesting path from algo..."))
         self.logger.info(f"data: {data}")
-        body = {**data, "big_turn": "0", "robot_x": robot_x,
-                "robot_y": robot_y, "robot_dir": robot_dir, "retrying": retrying}
+        body = {
+            **data,
+            "big_turn": "0",
+            "robot_x": robot_x,
+            "robot_y": robot_y,
+            "robot_dir": robot_dir,
+            "retrying": retrying,
+        }
         url = f"http://{API_IP}:{API_PORT}/path"
         response = requests.post(url, json=body)
 
         # Error encountered at the server, return early
         if response.status_code != 200:
-            self.android_queue.put(AndroidMessage(
-                "error", "Something went wrong when requesting path from Algo API."))
+            self.android_queue.put(
+                AndroidMessage(
+                    "error", "Something went wrong when requesting path from Algo API."
+                )
+            )
             self.logger.error(
-                "Something went wrong when requesting path from Algo API.")
+                "Something went wrong when requesting path from Algo API."
+            )
             return
 
         # Parse response
-        result = json.loads(response.content)['data']
-        commands = result['commands']
-        path = result['path']
+        result = json.loads(response.content)["data"]
+        commands = result["commands"]
+        path = result["path"]
 
         # Log commands received
         self.logger.debug(f"Commands received from API: {commands}")
@@ -570,13 +709,17 @@ class RaspberryPi:
         self.clear_queues()
         for c in commands:
             self.command_queue.put(c)
-        for p in path[1:]:  # ignore first element as it is the starting position of the robot
+        for p in path[
+            1:
+        ]:  # ignore first element as it is the starting position of the robot
             self.path_queue.put(p)
 
-        self.android_queue.put(AndroidMessage(
-            "info", "Commands and path received Algo API. Robot is ready to move."))
-        self.logger.info(
-            "Commands and path received Algo API. Robot is ready to move.")
+        self.android_queue.put(
+            AndroidMessage(
+                "info", "Commands and path received Algo API. Robot is ready to move."
+            )
+        )
+        self.logger.info("Commands and path received Algo API. Robot is ready to move.")
 
     def request_stitch(self):
         """Sends a stitch request to the image recognition API to stitch the different images together"""
@@ -586,10 +729,14 @@ class RaspberryPi:
         # If error, then log, and send error to Android
         if response.status_code != 200:
             # Notify android
-            self.android_queue.put(AndroidMessage(
-                "error", "Something went wrong when requesting stitch from the API."))
+            self.android_queue.put(
+                AndroidMessage(
+                    "error", "Something went wrong when requesting stitch from the API."
+                )
+            )
             self.logger.error(
-                "Something went wrong when requesting stitch from the API.")
+                "Something went wrong when requesting stitch from the API."
+            )
             return
 
         self.logger.info("Images stitched!")

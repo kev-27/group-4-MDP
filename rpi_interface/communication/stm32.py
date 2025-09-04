@@ -53,7 +53,7 @@ class STMLink(Link):
         self.logger.info("Disconnected from STM32")
 
     def send(self, message: str) -> None:
-        """Send a message to STM32, ascii encoded 
+        """Send a message to STM32, ascii encoded
 
         Args:
             message (str): message to send

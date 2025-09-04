@@ -8,6 +8,7 @@ import queue
 
 logger = logging.getLogger("root")
 
+
 def setup_logging():
     BASE_DIR = pathlib.Path(__file__).resolve().parent  # "logger/"
     CONFIG_FILE = BASE_DIR / "logging_configs.json"
@@ -41,11 +42,13 @@ def setup_logging():
     listener.start()
     atexit.register(listener.stop)
 
+
 setup_logging()
+
 
 def main() -> None:
     setup_logging()
 
+
 if __name__ == "__main__":
     main()
-
