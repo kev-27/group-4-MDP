@@ -87,6 +87,12 @@ class RaspberryPi:
 
         # X,Y,D coordinates of the robot after execution of a command
         # D: direction
+        # 
+        #        NORTH - UP - 0
+        #        EAST - RIGHT - 2
+        #        SOUTH - DOWN - 4
+        #        WEST - LEFT 6
+
         self.path_queue = self.manager.Queue()
         # ======================================================
 
