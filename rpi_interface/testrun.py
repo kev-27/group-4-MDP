@@ -202,10 +202,20 @@ class RaspberryPi:
 
             self.android_dropped.clear()
 
+
     def recv_android(self) -> None:
+
         """
         [Child Process] Processes the messages received from Android
         """
+
+        def validate_integrity(msg_str):
+            try:
+                return json.loads(msg_str)
+            except json.JSONDecodeError:
+                logger.warning(f"Received corrupted / invalid JSON: {msg_str!r}")
+                return None
+
         while True:
             msg_str: Optional[str] = None
             try:
@@ -218,8 +228,11 @@ class RaspberryPi:
                 self.logger.debug("in recv_android: msg is none")
                 continue
 
-            message: dict = json.loads(msg_str)
-
+            message = validate_integrity(msg_str)
+            if message is None:
+                self.logger.debug("in recv_android: msg is none or corrupted")
+                continue
+            
             ## Command: Set obstacles ##
             if message["cat"] == "obstacles":
                 self.rpi_action_queue.put(PiAction(**message))
