@@ -276,16 +276,16 @@
                             android:layout_height="50dp"
                             android:layout_marginStart="10dp"
                             android:background="@color/transparent"
-                            android:foreground="@drawable/poke_left" />
+                            android:foreground="@drawable/left" />
 
                         <!--                        android:background="@drawable/circular_button"-->
                         <ImageButton
                             android:id="@+id/upBtn"
-                            android:layout_width="50dp"
-                            android:layout_height="50dp"
+                            android:layout_width="52dp"
+                            android:layout_height="match_parent"
                             android:layout_marginStart="15dp"
                             android:background="@color/transparent"
-                            android:foreground="@drawable/poke_up" />
+                            android:foreground="@drawable/up" />
 
                         <ImageButton
                             android:id="@+id/rightBtn"
@@ -293,7 +293,7 @@
                             android:layout_height="50dp"
                             android:layout_marginStart="15dp"
                             android:background="@color/transparent"
-                            android:foreground="@drawable/poke_right" />
+                            android:foreground="@drawable/right" />
                     </LinearLayout>
 
                     <LinearLayout
@@ -309,7 +309,8 @@
                             android:layout_height="50dp"
 
                             android:background="@color/transparent"
-                            android:foreground="@drawable/back_turn_left_arrow_icon" />
+                            android:foreground="@drawable/back_turn_left_arrow_icon"
+                             />
 
                         <ImageButton
                             android:id="@+id/downBtn"
@@ -317,7 +318,7 @@
                             android:layout_height="50dp"
                             android:layout_marginStart="15dp"
                             android:background="@color/transparent"
-                            android:foreground="@drawable/poke_down" />
+                            android:foreground="@drawable/down" />
 
                         <ImageButton
                             android:id="@+id/brightBtn"
@@ -325,7 +326,8 @@
                             android:layout_height="50dp"
                             android:layout_marginStart="15dp"
                             android:background="@color/transparent"
-                            android:foreground="@drawable/back_turn_right_arrow_icon" />
+                            android:foreground="@drawable/back_turn_right_arrow_icon"
+                            />
                     </LinearLayout>
                 </LinearLayout>
 
