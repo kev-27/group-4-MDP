@@ -23,7 +23,6 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.CompoundButton;
-import android.widget.ImageButton;
 import android.widget.ListView;
 import android.widget.Switch;
 import android.widget.TextView;
@@ -258,7 +257,7 @@ public class BluetoothSetUp extends Fragment {
             }
         });
 
-        ImageButton backBtn = root.findViewById(R.id.backBtn);
+        Button backBtn = root.findViewById(R.id.backBtn);
 
         connStatusTextView = root.findViewById(R.id.connStatusTextView);
         connStatus ="Disconnected";

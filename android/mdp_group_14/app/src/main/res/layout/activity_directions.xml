@@ -2,7 +2,6 @@
 <androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
@@ -25,7 +24,7 @@
         android:id="@+id/directionTitleTextView"
         android:layout_width="140dp"
         android:layout_height="50dp"
-        android:layout_marginStart="40dp"
+        android:layout_marginStart="112dp"
         android:layout_marginTop="60dp"
         android:gravity="center"
         android:text="Direction: "
@@ -35,47 +34,41 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/directionFragmentTitleTextView" />
 
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/cancelDirectionBtn"
-        android:layout_width="166dp"
-        android:layout_height="70dp"
-        android:background="@drawable/rounded_background_light"
-        android:onClick="Cancel"
-        android:padding="12dp"
-        android:text="CANCEL"
-        android:textColor="@android:color/black"
+    <Button
+        android:id="@+id/saveBtn"
+        android:layout_width="140dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="25dp"
+        android:onClick="Save"
+        android:text="SAVE"
         android:textSize="24sp"
-        app:backgroundTint="@android:color/transparent"
-        app:cornerRadius="12dp"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toStartOf="@+id/saveBtn"
-        app:layout_constraintHorizontal_chainStyle="spread"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.619"
+        app:layout_constraintStart_toEndOf="@+id/cancelDirectionBtn"
+        app:layout_constraintTop_toBottomOf="@+id/directionDropdownSpinner"
+        app:layout_constraintVertical_bias="0.049"
+        android:background="@drawable/border_black_state"
+        app:backgroundTint="@color/colorYellow"/>
+
+
+    <Button
+        android:id="@+id/cancelDirectionBtn"
+        android:layout_width="140dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="100dp"
+        android:layout_marginTop="25dp"
+        android:layout_marginBottom="8dp"
+        android:onClick="Cancel"
+        android:text="CANCEL"
+        android:textSize="24dp"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/directionTitleTextView"
         app:layout_constraintVertical_bias="0.05"
-        app:strokeColor="@color/lightGray"
-        app:strokeWidth="2dp" />
-
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/saveBtn"
-        android:layout_width="155dp"
-        android:layout_height="70dp"
-        android:background="@drawable/rounded_background_light"
-        android:onClick="Save"
-        android:padding="12dp"
-        android:text="SAVE"
-        android:textColor="@android:color/black"
-        android:textSize="24sp"
-        app:backgroundTint="@android:color/transparent"
-        app:cornerRadius="12dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@+id/cancelDirectionBtn"
-        app:layout_constraintTop_toBottomOf="@+id/directionDropdownSpinner"
-        app:layout_constraintVertical_bias="0.05"
-        app:strokeColor="@color/lightGray"
-        app:strokeWidth="2dp" />
-
+        android:background="@drawable/border_black_state"
+        app:backgroundTint="@color/colorYellow"
+        />
 
     <Spinner
         android:id="@+id/directionDropdownSpinner"

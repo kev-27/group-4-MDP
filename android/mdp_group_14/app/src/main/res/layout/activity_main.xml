@@ -8,52 +8,69 @@
     tools:context=".MainActivity"
     android:background="@color/colorWhite">
 
+<!--    <ImageView-->
+<!--        android:layout_width="match_parent"-->
+<!--        android:layout_height="match_parent"-->
+<!--        android:scaleType="fitXY"/>-->
+<!--    android:src="@drawable/bg"-->
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@drawable/rounded_background_light"
+        android:background="@drawable/bg4"
         android:orientation="vertical">
 
-        <!-- Toolbar -->
         <androidx.appcompat.widget.Toolbar
             android:id="@+id/appBarLayout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="@drawable/rounded_background_light"
+            android:background="#0000ffff"
             android:orientation="horizontal"
             android:paddingTop="10dp">
 
+            <ImageView
+                android:layout_width="120dp"
+                android:layout_height="85dp"
+                android:layout_marginTop="10dp"
+                android:scaleType="fitXY"
+                android:src="@drawable/nav_icon2" />
 
-            <TextView
-                android:id="@+id/title"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:background="@color/transparent"
-                android:fontFamily="sans-serif"
-                android:gravity="center"
-                android:minHeight="?actionBarSize"
-                android:padding="@dimen/appbar_padding"
-                android:text="MDP Group 4"
-                android:textColor="@color/colorBlack"
-                android:textSize="25sp"
-                android:textStyle="bold" />
-            -->
+            <ImageView
+                android:layout_width="430dp"
+                android:layout_height="100dp"
+
+                android:src="@drawable/group_name2" />
+
+<!--            <TextView-->
+<!--                android:id="@+id/title"-->
+<!--                android:layout_width="wrap_content"-->
+<!--                android:layout_height="wrap_content"-->
+<!--                android:background="@color/transparent"-->
+<!--                android:fontFamily="sans-serif"-->
+<!--                android:gravity="center"-->
+<!--                android:minHeight="?actionBarSize"-->
+<!--                android:padding="@dimen/appbar_padding"-->
+<!--                android:text="MDP Group 14"-->
+<!--                android:textColor="@color/colorBlack"-->
+<!--                android:textSize="25sp"-->
+<!--                android:textStyle="bold" />-->
+
+
         </androidx.appcompat.widget.Toolbar>
 
-        <!-- ViewPager -->
         <androidx.viewpager.widget.ViewPager
             android:id="@+id/view_pager2"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
+
             app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
-            <!-- TabLayout should be outside ViewPager in XML, but kept here as in original -->
             <com.google.android.material.tabs.TabLayout
+
                 android:id="@+id/tabs2"
                 android:layout_width="match_parent"
                 android:layout_height="60dp"
-                android:background="@drawable/rounded_background_light"
+                android:background="@drawable/bg4"
                 app:tabGravity="center"
                 app:tabIndicator="@drawable/selected_tab"
                 app:tabIndicatorAnimationMode="elastic"
@@ -62,6 +79,7 @@
                 app:tabMinWidth="130dp"
                 app:tabMode="scrollable"
                 app:tabRippleColor="@null"
+
                 app:tabSelectedTextColor="@color/colorBlack" />
 
         </androidx.viewpager.widget.ViewPager>

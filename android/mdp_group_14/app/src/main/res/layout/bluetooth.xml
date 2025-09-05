@@ -1,17 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/rounded_background_light">
+    android:background="@drawable/bg4">
+
+    <Button
+        android:id="@+id/backBtn"
+        android:layout_width="wrap_content"
+        android:layout_height="90dp"
+        android:layout_centerHorizontal="true"
+        android:layout_marginStart="10dp"
+        android:layout_marginLeft="20dp"
+        android:layout_marginTop="10dp"
+        android:background="?android:attr/selectableItemBackground"
+        android:foreground="@drawable/back" />
 
     <TextView
         android:id="@+id/connStatusTextView"
-        android:layout_width="119dp"
-        android:layout_height="43dp"
-        android:layout_marginTop="4dp"
-        android:layout_marginEnd="4dp"
+        android:layout_width="138dp"
+        android:layout_height="45dp"
+        android:layout_marginTop="20dp"
+        android:layout_marginEnd="24dp"
         android:foregroundGravity="center"
         android:gravity="center"
         android:onClick="toggleButtonScan"
@@ -26,17 +36,15 @@
 
     <TextView
         android:id="@+id/textView"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="138dp"
+        android:layout_height="42dp"
+
         android:layout_marginTop="24dp"
         android:text="Bluetooth"
         android:textColor="@color/black"
         android:textSize="30sp"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.5" />
-
+        app:layout_constraintStart_toEndOf="@+id/backBtn"
+        app:layout_constraintTop_toTopOf="parent" />
 
     <Switch
         android:id="@+id/bluetoothSwitch"
@@ -48,8 +56,8 @@
         android:textColor="@color/black"
         android:textSize="14sp"
         android:thumbTint="#404252"
-        app:layout_constraintStart_toEndOf="@+id/textView"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/textView" />
 
     <Button
         android:id="@+id/scanButton"
@@ -57,13 +65,13 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="24dp"
         android:layout_marginTop="10dp"
-        android:backgroundTint="#3754718A"
-        android:onClick="toggleButtonScan"
+        android:backgroundTint="#1B70EA"
         android:paddingHorizontal="34dp"
         android:paddingVertical="14dp"
         android:text="Scan"
         android:textColor="#FFFFFF"
         android:textSize="18sp"
+        android:onClick="toggleButtonScan"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/otherDevicesListView" />
 
@@ -86,7 +94,7 @@
         android:layout_marginStart="24dp"
         android:layout_marginTop="10dp"
         android:layout_marginEnd="24dp"
-        android:background="#5C92A6AD"
+        android:background="#9BD5EF"
         android:listSelector="#539ABB"
         android:padding="10dp"
         android:scrollbars="vertical"
@@ -114,7 +122,8 @@
         android:layout_marginStart="24dp"
         android:layout_marginTop="10dp"
         android:layout_marginEnd="24dp"
-        android:background="#5E92A6AD"
+        android:layout_marginBottom="10dp"
+        android:background="#9BD5EF"
         android:listSelector="#539ABB"
         android:padding="10dp"
         app:layout_constraintEnd_toEndOf="parent"
@@ -129,7 +138,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="10dp"
         android:layout_marginEnd="24dp"
-        android:backgroundTint="#3854718A"
+        android:backgroundTint="#1B70EA"
         android:paddingHorizontal="34dp"
         android:paddingVertical="14dp"
         android:text="Connect"
@@ -138,18 +147,15 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/otherDevicesListView" />
 
-    <ImageButton
-        android:id="@+id/backBtn"
-        android:layout_width="40dp"
-        android:layout_height="40dp"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="4dp"
-        android:background="@android:color/transparent"
-        android:contentDescription="Back"
+    <ImageView
+        android:layout_width="200dp"
+        android:layout_height="200dp"
+        android:layout_centerHorizontal="true"
+        android:src="@drawable/pokeball_bt"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:srcCompat="@drawable/outline_arrow_back_24"
-        app:tint="@android:color/black" />
+        app:layout_constraintTop_toBottomOf="@+id/otherDevicesListView"></ImageView>
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>

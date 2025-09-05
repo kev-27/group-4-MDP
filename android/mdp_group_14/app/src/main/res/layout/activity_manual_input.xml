@@ -25,7 +25,7 @@
         android:id="@+id/xTextView"
         android:layout_width="50dp"
         android:layout_height="50dp"
-        android:layout_marginStart="28dp"
+        android:layout_marginStart="85dp"
         android:layout_marginTop="40dp"
         android:gravity="center"
         android:text="X: "
@@ -69,7 +69,7 @@
         android:id="@+id/directionTextView"
         android:layout_width="140dp"
         android:layout_height="50dp"
-        android:layout_marginStart="16dp"
+        android:layout_marginStart="40dp"
         android:layout_marginTop="40dp"
         android:gravity="center"
         android:text="Direction: "
@@ -91,59 +91,49 @@
         app:layout_constraintStart_toEndOf="@+id/directionTextView"
         app:layout_constraintTop_toBottomOf="@+id/xTextView" />
 
-
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/cancelManualBtn"
-        android:layout_width="140dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="52dp"
-        android:layout_marginTop="25dp"
-        android:background="@drawable/rounded_background_light"
-        android:onClick="Cancel"
-        android:padding="12dp"
-        android:text="CANCEL"
-        android:textColor="@android:color/black"
-        android:textSize="24sp"
-        app:backgroundTint="@android:color/transparent"
-        app:cornerRadius="12dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/directionDropdownSpinner"
-        app:layout_constraintVertical_bias="0.05"
-        app:strokeColor="@color/lightGray"
-        app:strokeWidth="2dp" />
-
-    <com.google.android.material.button.MaterialButton
+    <Button
         android:id="@+id/addManualBtn"
         android:layout_width="140dp"
         android:layout_height="wrap_content"
-        android:layout_marginStart="40dp"
         android:layout_marginTop="25dp"
-        android:background="@drawable/rounded_background_light"
-        android:padding="12dp"
         android:text="ADD"
-        android:textColor="@android:color/black"
         android:textSize="24sp"
-        app:backgroundTint="@android:color/transparent"
-        app:cornerRadius="12dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintHorizontal_bias="0.619"
         app:layout_constraintStart_toEndOf="@+id/cancelManualBtn"
         app:layout_constraintTop_toBottomOf="@+id/directionDropdownSpinner"
+        app:layout_constraintVertical_bias="0.049"
+        android:background="@drawable/border_black_state"
+        app:backgroundTint="@color/colorYellow"/>
+
+
+    <Button
+        android:id="@+id/cancelManualBtn"
+        android:layout_width="140dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="70dp"
+        android:layout_marginTop="20dp"
+        android:layout_marginBottom="8dp"
+        android:onClick="Cancel"
+        android:text="CANCEL"
+        android:textSize="24dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/directionTextView"
         app:layout_constraintVertical_bias="0.05"
-        app:strokeColor="@color/lightGray"
-        app:strokeWidth="2dp" />
+        android:background="@drawable/border_black_state"
+        app:backgroundTint="@color/colorYellow"
+        />
 
     <Switch
         android:id="@+id/isObstSwitch"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="4dp"
+        android:layout_marginLeft="30dp"
         android:text="Obstacle"
         app:layout_constraintBottom_toBottomOf="@+id/directionDropdownSpinner"
         app:layout_constraintStart_toEndOf="@+id/directionDropdownSpinner"
-        app:layout_constraintTop_toTopOf="@+id/directionDropdownSpinner"
-        app:layout_constraintVertical_bias="0.565" />
+        app:layout_constraintTop_toTopOf="@+id/directionDropdownSpinner" />
 
 </androidx.constraintlayout.widget.ConstraintLayout >
