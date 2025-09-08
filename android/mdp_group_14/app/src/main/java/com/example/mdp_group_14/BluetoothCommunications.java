@@ -19,6 +19,9 @@ import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
+import org.json.JSONObject;
+import org.json.JSONArray;
+
 import java.nio.charset.Charset;
 
 public class BluetoothCommunications extends Fragment {
@@ -28,7 +31,6 @@ public class BluetoothCommunications extends Fragment {
     private static TextView messageReceivedTextView;
     private static EditText typeBoxEditText;
     StringBuilder messages;
-
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -42,7 +44,6 @@ public class BluetoothCommunications extends Fragment {
             @NonNull LayoutInflater inflater, ViewGroup container,
             Bundle savedInstanceState) {
         View root = inflater.inflate(R.layout.activity_communications, container, false);
-
 
         ImageButton send;
         send = root.findViewById(R.id.messageButton);
@@ -68,14 +69,43 @@ public class BluetoothCommunications extends Fragment {
                 typeBoxEditText.setText("");
 
                 if (BluetoothConnectionService.BluetoothConnectionStatus) {
-                    byte[] bytes = sentText.getBytes(Charset.defaultCharset());
-                    BluetoothConnectionService.write(bytes);
+                    // Use improved JSON detection
+                    if (isValidJSON(sentText)) {
+                        Log.d(TAG, "Sending as JSON: " + sentText);
+                        BluetoothConnectionService.writeJson(sentText);
+                    } else {
+                        Log.d(TAG, "Sending as plain text: " + sentText);
+                        byte[] bytes = sentText.getBytes(java.nio.charset.StandardCharsets.UTF_8);
+                        BluetoothConnectionService.write(bytes);
+                    }
                 }
                 showLog("Exiting sendTextBtn");
             }
         });
 
         return root;
+    }
+
+    // Improved JSON validation method
+    private boolean isValidJSON(String text) {
+        String trimmed = text.trim();
+        if (trimmed.isEmpty()) {
+            return false;
+        }
+        
+        try {
+            if (trimmed.startsWith("{")) {
+                new JSONObject(trimmed);
+                return true;
+            } else if (trimmed.startsWith("[")) {
+                new JSONArray(trimmed);
+                return true;
+            }
+            return false;
+        } catch (Exception e) {
+            Log.d(TAG, "JSON validation failed: " + e.getMessage());
+            return false;
+        }
     }
 
     private static void showLog(String message) {
@@ -92,7 +122,12 @@ public class BluetoothCommunications extends Fragment {
         @Override
         public void onReceive(Context context, Intent intent) {
             String text = intent.getStringExtra("receivedMessage");
-            messageReceivedTextView.append(text+"\n");
+            Log.d(TAG, "Received message via broadcast: " + text);
+            if (text != null && !text.trim().isEmpty()) {
+                messageReceivedTextView.append(text+"\n");
+            } else {
+                Log.w(TAG, "Received null or empty message");
+            }
         }
     };
 }

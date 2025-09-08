@@ -43,6 +43,9 @@ import java.util.Arrays;
 import java.util.Objects;
 import java.util.UUID;
 
+import org.json.JSONObject;
+import org.json.JSONArray;
+
 public class Home extends Fragment {
 
     final Handler handler = new Handler();
@@ -212,7 +215,8 @@ public class Home extends Fragment {
 
         // Translated ver is sent
         if (BluetoothConnectionService.BluetoothConnectionStatus == true){
-            byte[] bytes = strArr[1].getBytes(Charset.defaultCharset());
+            String toSend = strArr[1].endsWith("\n") ? strArr[1] : strArr[1] + "\n";
+            byte[] bytes = toSend.getBytes(Charset.defaultCharset());
             BluetoothConnectionService.write(bytes);
         }
 
@@ -228,8 +232,17 @@ public class Home extends Fragment {
         editor = sharedPreferences.edit();
 
         if (BluetoothConnectionService.BluetoothConnectionStatus) {
-            byte[] bytes = message.getBytes(Charset.defaultCharset());
-            BluetoothConnectionService.write(bytes);
+            // Use the same JSON detection logic as BluetoothCommunications
+            if (isValidJSON(message)) {
+                showLog("Sending as JSON: " + message);
+                BluetoothConnectionService.writeJson(message);  // This adds \n for JSON
+            } else {
+                showLog("Sending as plain text: " + message);
+                // Ensure newline for message framing
+                String toSend = message.endsWith("\n") ? message : message + "\n";
+                byte[] bytes = toSend.getBytes(Charset.defaultCharset());
+                BluetoothConnectionService.write(bytes);
+            }
         }
         showLog(message);
         showLog("Exiting printMessage");
@@ -239,7 +252,22 @@ public class Home extends Fragment {
     public static void printMessage(JSONArray message) {
         showLog("Entering printMessage");
         editor = sharedPreferences.edit();
+        if (BluetoothConnectionService.BluetoothConnectionStatus) {
+            String payload = message.toString() + "\n"; // newline-delimited JSON
+            byte[] bytes = payload.getBytes(Charset.defaultCharset());
+            BluetoothConnectionService.write(bytes);
+        }
+    }
 
+    // Send JSONObject variant (not shown on chat box)
+    public static void printMessage(JSONObject message) {
+        showLog("Entering printMessage (JSONObject)");
+        editor = sharedPreferences.edit();
+        if (BluetoothConnectionService.BluetoothConnectionStatus) {
+            String payload = message.toString() + "\n"; // newline-delimited JSON
+            byte[] bytes = payload.getBytes(Charset.defaultCharset());
+            BluetoothConnectionService.write(bytes);
+        }
     }
 
 
@@ -304,6 +332,27 @@ public class Home extends Fragment {
 
     private static void showLog(String message) {
         Log.d(TAG, message);
+    }
+
+    private static boolean isValidJSON(String text) {
+        String trimmed = text.trim();
+        if (trimmed.isEmpty()) {
+            return false;
+        }
+        
+        try {
+            if (trimmed.startsWith("{")) {
+                new JSONObject(trimmed);
+                return true;
+            } else if (trimmed.startsWith("[")) {
+                new JSONArray(trimmed);
+                return true;
+            }
+            return false;
+        } catch (Exception e) {
+            Log.d(TAG, "JSON validation failed: " + e.getMessage());
+            return false;
+        }
     }
 
     private final BroadcastReceiver mBroadcastReceiver5 = new BroadcastReceiver() {

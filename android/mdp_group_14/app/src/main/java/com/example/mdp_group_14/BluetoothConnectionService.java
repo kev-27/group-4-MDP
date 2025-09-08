@@ -22,7 +22,7 @@ import java.util.UUID;
 public class BluetoothConnectionService {
     private static final String TAG = "Debugging Tag";
     private static final String appName = "MDP_Grp_14";
-    private static final UUID MY_UUID = UUID.fromString("b2a5ef6a-ec41-45b5-8aae-0f9ff16c09ce");
+    private static final UUID MY_UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
 
     private final BluetoothAdapter mBluetoothAdapter;
     Context mContext;
@@ -223,17 +223,38 @@ public class BluetoothConnectionService {
         public void run() {
             byte[] buffer = new byte[1024];
             int bytes;
+            StringBuilder messageBuffer = new StringBuilder();
 
             while (true) {
                 try {
                     bytes = inStream.read(buffer);
-                    String incomingMessage = new String(buffer, 0, bytes);
-                    Log.d(TAG, "InputStream: " + incomingMessage);
+                    if (bytes == -1) {
+                        throw new IOException("Stream closed");
+                    }
+                    String chunk = new String(buffer, 0, bytes, java.nio.charset.StandardCharsets.UTF_8);
+                    messageBuffer.append(chunk);
 
-                    Intent incomingMessageIntent = new Intent("incomingMessage");
-                    incomingMessageIntent.putExtra("receivedMessage", incomingMessage);
+                    int newlineIndex;
+                    while ((newlineIndex = messageBuffer.indexOf("\n")) >= 0) {
+                        String incomingMessage = messageBuffer.substring(0, newlineIndex);
+                        // Remove consumed message and the delimiter
+                        messageBuffer.delete(0, newlineIndex + 1);
 
-                    LocalBroadcastManager.getInstance(mContext).sendBroadcast(incomingMessageIntent);
+                        // Add debugging logs
+                        Log.d(TAG, "Processing message - Length: " + incomingMessage.length());
+                        Log.d(TAG, "Message content: '" + incomingMessage + "'");
+                        
+                        if (incomingMessage.trim().isEmpty()) {
+                            Log.w(TAG, "Skipping empty message");
+                            continue;
+                        }
+
+                        Log.d(TAG, "Broadcasting message: " + incomingMessage);
+
+                        Intent incomingMessageIntent = new Intent("incomingMessage");
+                        incomingMessageIntent.putExtra("receivedMessage", incomingMessage);
+                        LocalBroadcastManager.getInstance(mContext).sendBroadcast(incomingMessageIntent);
+                    }
                 } catch (IOException e) {
                     Log.e(TAG, "Error reading input stream. " + e.getMessage());
 
@@ -251,10 +272,11 @@ public class BluetoothConnectionService {
             }
         }
         public void write(byte[] bytes){
-            String text = new String(bytes, Charset.defaultCharset());
+            String text = new String(bytes, java.nio.charset.StandardCharsets.UTF_8);
             Log.d(TAG, "write: Writing to output stream: "+text);
             try {
                 outStream.write(bytes);
+                outStream.flush(); // Ensure data is sent immediately
             } catch (IOException e) {
                 Log.e(TAG, "Error writing to output stream. "+e.getMessage());
             }
@@ -283,10 +305,22 @@ public class BluetoothConnectionService {
         mConnectedThread.start();
     }
 
-    public static void write(byte[] out){
-        ConnectedThread tmp;
+    // Helper to send JSON string, ensures newline and UTF-8 encoding
+    public static void writeJson(String json){
+        if (mConnectedThread != null && BluetoothConnectionStatus) {
+            String message = json.endsWith("\n") ? json : json + "\n";
+            mConnectedThread.write(message.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        } else {
+            Log.e(TAG, "writeJson: No active Bluetooth connection.");
+        }
+    }
 
+    public static void write(byte[] out){
         Log.d(TAG, "write: Write is called." );
-        mConnectedThread.write(out);
+        if (mConnectedThread != null && BluetoothConnectionStatus) {
+            mConnectedThread.write(out);
+        } else {
+            Log.e(TAG, "write: No active Bluetooth connection.");
+        }
     }
 }
