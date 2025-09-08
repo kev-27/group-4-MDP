@@ -878,12 +878,63 @@ def test_algo_comm_only():
         print("Keyboard interrupt received, shutting down.")
 
 
+def test_stm_comm_only():
+    """
+    Standalone test for STM32 <-> RPi communication.
+    Starts the command_follower process, enqueues test commands,
+    and logs interactions as a proxy for STM32 communication.
+    """
+    rpi = RaspberryPi()
+    rpi.logger.info("=== STM32 Communication Test Started ===")
+
+    # Start the command_follower process
+    rpi.proc_command_follower = Process(target=rpi.command_follower)
+    rpi.proc_command_follower.start()
+
+    TEST_COMMANDS = [
+        "FW10",  # Move forward
+        "BW10",  # Move backward
+        "FR00",  # Forward + Right turn
+        "FL00",  # Forward + Left turn
+        "BR00",  # Backward + Right turn
+        "BL00",  # Backward + Left turn
+        "FIN",  # End of commands
+    ]
+
+    try:
+        rpi.logger.debug("Enqueuing test commands to RPi command queue...")
+        for cmd in TEST_COMMANDS:
+            rpi.logger.debug(f"Enqueueing command: {cmd}")
+            rpi.command_queue.put(cmd)
+
+        # Unpause the command follower so it can process commands
+        rpi.unpause.set()
+
+        rpi.logger.info("Commands enqueued. Command follower is processing...")
+
+        # Allow some time for processing (simulate STM responses)
+        time.sleep(2)
+
+        rpi.logger.info("STM32 <-> RPi communication test completed.")
+
+    except KeyboardInterrupt:
+        rpi.logger.info("Keyboard interrupt received, shutting down.")
+    finally:
+        # Clean up the child process
+        if rpi.proc_command_follower:
+            rpi.proc_command_follower.terminate()
+            rpi.proc_command_follower.join()
+        rpi.logger.info("=== STM32 Communication Test Ended ===")
+
+
 if __name__ == "__main__":
 
     if "--test-android" in sys.argv:
         test_android_comm_only()
     elif "--test-algo" in sys.argv:
         test_algo_comm_only()
+    elif "--test-stm" in sys.argv:
+        test_stm_comm_only()
     else:
         rpi = RaspberryPi()
         rpi.start()
