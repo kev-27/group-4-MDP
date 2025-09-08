@@ -88,7 +88,7 @@ class RaspberryPi:
 
         # X,Y,D coordinates of the robot after execution of a command
         # D: direction
-        # 
+        #
         #        NORTH - UP - 0
         #        EAST - RIGHT - 2
         #        SOUTH - DOWN - 4
@@ -126,7 +126,7 @@ class RaspberryPi:
             )
             self.stm_link.connect()
             # Check whether image recognition and algorithm API server is up and running
-            # self.check_api() # not implemented
+            self.check_api()
             # ======================================
 
             # Set the defined class methods as a parallel process
@@ -203,9 +203,7 @@ class RaspberryPi:
 
             self.android_dropped.clear()
 
-
     def recv_android(self) -> None:
-
         """
         [Child Process] Processes the messages received from Android
         """
@@ -233,7 +231,7 @@ class RaspberryPi:
             if message is None:
                 self.logger.debug("in recv_android: msg is none or corrupted")
                 continue
-            
+
             ## Command: Set obstacles ##
             if message["cat"] == "obstacles":
                 self.rpi_action_queue.put(PiAction(**message))
@@ -798,26 +796,25 @@ class RaspberryPi:
 def test_android_comm_only():
     """
     Run a standalone test of Android <-> RPi communication.
-    This will not start STM32 or image recognition.
     """
     rpi = RaspberryPi()
     try:
-        # Connect to Android only
         rpi.android_link.connect()
         rpi.logger.info("=== Android Communication Test Started ===")
 
-        # Start only Android processes
         rpi.proc_recv_android = Process(target=rpi.recv_android)
         rpi.proc_android_sender = Process(target=rpi.android_sender)
 
         rpi.proc_recv_android.start()
         rpi.proc_android_sender.start()
 
-        # Send a welcome test message to the app
+        # Send a welcome test message to the app, sufficient for rpi to android
         rpi.android_queue.put(AndroidMessage("info", "RPi test connection active"))
         rpi.android_queue.put(AndroidMessage("mode", "test"))
 
-        # Keep running so you can manually send JSON from your Android app
+        # Keep running and test android to rpi
+        # if things work out, we should be receiving messages based on the plots
+        # the android
         while True:
             time.sleep(1)
 
@@ -826,16 +823,67 @@ def test_android_comm_only():
     finally:
         # Cleanup
         rpi.android_link.disconnect()
-        if rpi.proc_recv_android: rpi.proc_recv_android.kill()
-        if rpi.proc_android_sender: rpi.proc_android_sender.kill()
+        if rpi.proc_recv_android:
+            rpi.proc_recv_android.kill()
+        if rpi.proc_android_sender:
+            rpi.proc_android_sender.kill()
         rpi.logger.info("=== Android Communication Test Ended ===")
+
+
+def test_algo_comm_only():
+    """
+    Run a standalone test of Algo <-> RPi communication, and print the raw API response.
+    """
+    rpi = RaspberryPi()
+    rpi.check_api()
+
+    TEST_OBSTACLES = {
+        "obstacles": [
+            {"x": 2, "y": 5, "id": 1, "d": 1},
+            {"x": 7, "y": 3, "id": 2, "d": 2},
+            {"x": 10, "y": 12, "id": 3, "d": 0},
+            {"x": 14, "y": 8, "id": 4, "d": 3},
+            {"x": 5, "y": 15, "id": 5, "d": 2},
+            {"x": 18, "y": 6, "id": 6, "d": 1},
+        ]
+    }
+
+    body = {
+        **TEST_OBSTACLES,
+        "big_turn": "0",
+        "robot_x": 1,
+        "robot_y": 1,
+        "robot_dir": 0,
+        "retrying": False,
+    }
+
+    url = f"http://{API_IP}:{API_PORT}/path"
+
+    try:
+        rpi.logger.debug("=== Algo Communication Test Started ===")
+        rpi.logger.debug("Sending test obstacles to Algo API...")
+        rpi.logger.debug(f"{json.dumps(TEST_OBSTACLES, indent=4)}")
+
+        response = requests.post(url, json=body)
+        rpi.logger.debug(f"HTTP status code: {response.status_code}")
+
+        if response.status_code == 200:
+            result = response.json()
+            rpi.logger.debug("Response from Algo API:")
+            rpi.logger.debug(json.dumps(result, indent=4))
+        else:
+            rpi.logger.error(f"Error contacting Algo API: {response.text}")
+
+    except KeyboardInterrupt:
+        print("Keyboard interrupt received, shutting down.")
 
 
 if __name__ == "__main__":
 
     if "--test-android" in sys.argv:
         test_android_comm_only()
+    elif "--test-algo" in sys.argv:
+        test_algo_comm_only()
     else:
         rpi = RaspberryPi()
         rpi.start()
-    
