@@ -11,6 +11,7 @@ from communication.stm32 import STMLink
 from consts import SYMBOL_MAP
 from logger.logger import logger
 from settings import API_IP, API_PORT
+import sys
 
 
 class PiAction:
@@ -794,6 +795,47 @@ class RaspberryPi:
             return False
 
 
-if __name__ == "__main__":
+def test_android_comm_only():
+    """
+    Run a standalone test of Android <-> RPi communication.
+    This will not start STM32 or image recognition.
+    """
     rpi = RaspberryPi()
-    rpi.start()
+    try:
+        # Connect to Android only
+        rpi.android_link.connect()
+        rpi.logger.info("=== Android Communication Test Started ===")
+
+        # Start only Android processes
+        rpi.proc_recv_android = Process(target=rpi.recv_android)
+        rpi.proc_android_sender = Process(target=rpi.android_sender)
+
+        rpi.proc_recv_android.start()
+        rpi.proc_android_sender.start()
+
+        # Send a welcome test message to the app
+        rpi.android_queue.put(AndroidMessage("info", "RPi test connection active"))
+        rpi.android_queue.put(AndroidMessage("mode", "test"))
+
+        # Keep running so you can manually send JSON from your Android app
+        while True:
+            time.sleep(1)
+
+    except KeyboardInterrupt:
+        rpi.logger.info("Keyboard interrupt received, shutting down.")
+    finally:
+        # Cleanup
+        rpi.android_link.disconnect()
+        if rpi.proc_recv_android: rpi.proc_recv_android.kill()
+        if rpi.proc_android_sender: rpi.proc_android_sender.kill()
+        rpi.logger.info("=== Android Communication Test Ended ===")
+
+
+if __name__ == "__main__":
+
+    if "--test-android" in sys.argv:
+        test_android_comm_only()
+    else:
+        rpi = RaspberryPi()
+        rpi.start()
+    
