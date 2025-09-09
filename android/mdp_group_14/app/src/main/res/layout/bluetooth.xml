@@ -3,7 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/bg4">
+    android:background="@color/colorWhite">
 
     <Button
         android:id="@+id/backBtn"
@@ -14,7 +14,8 @@
         android:layout_marginLeft="20dp"
         android:layout_marginTop="10dp"
         android:background="?android:attr/selectableItemBackground"
-        android:foreground="@drawable/back" />
+        android:text="Back"
+        android:textColor="@color/black" />
 
     <TextView
         android:id="@+id/connStatusTextView"
@@ -38,7 +39,6 @@
         android:id="@+id/textView"
         android:layout_width="138dp"
         android:layout_height="42dp"
-
         android:layout_marginTop="24dp"
         android:text="Bluetooth"
         android:textColor="@color/black"
@@ -94,8 +94,8 @@
         android:layout_marginStart="24dp"
         android:layout_marginTop="10dp"
         android:layout_marginEnd="24dp"
-        android:background="#9BD5EF"
-        android:listSelector="#539ABB"
+        android:background="@drawable/rounded_corner"
+        android:listSelector="@color/lightBlue"
         android:padding="10dp"
         android:scrollbars="vertical"
         app:layout_constraintEnd_toEndOf="parent"
@@ -123,8 +123,8 @@
         android:layout_marginTop="10dp"
         android:layout_marginEnd="24dp"
         android:layout_marginBottom="10dp"
-        android:background="#9BD5EF"
-        android:listSelector="#539ABB"
+        android:background="@drawable/rounded_corner"
+        android:listSelector="@color/lightBlue"
         android:padding="10dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -147,15 +147,6 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/otherDevicesListView" />
 
-    <ImageView
-        android:layout_width="200dp"
-        android:layout_height="200dp"
-        android:layout_centerHorizontal="true"
-        android:src="@drawable/pokeball_bt"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/otherDevicesListView"></ImageView>
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>

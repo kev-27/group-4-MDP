@@ -275,25 +275,30 @@
                             android:layout_width="50dp"
                             android:layout_height="50dp"
                             android:layout_marginStart="10dp"
-                            android:background="@color/transparent"
-                            android:foreground="@drawable/poke_left" />
+                            android:background="@drawable/rounded_corner"
+                            android:src="@drawable/left_arrow"
+                            android:scaleType="fitCenter"
+                            android:padding="8dp" />
 
-                        <!--                        android:background="@drawable/circular_button"-->
                         <ImageButton
                             android:id="@+id/upBtn"
                             android:layout_width="50dp"
                             android:layout_height="50dp"
                             android:layout_marginStart="15dp"
-                            android:background="@color/transparent"
-                            android:foreground="@drawable/poke_up" />
+                            android:background="@drawable/rounded_corner"
+                            android:src="@drawable/up_arrow"
+                            android:scaleType="fitCenter"
+                            android:padding="8dp" />
 
                         <ImageButton
                             android:id="@+id/rightBtn"
                             android:layout_width="50dp"
                             android:layout_height="50dp"
                             android:layout_marginStart="15dp"
-                            android:background="@color/transparent"
-                            android:foreground="@drawable/poke_right" />
+                            android:background="@drawable/rounded_corner"
+                            android:src="@drawable/right_arrow"
+                            android:scaleType="fitCenter"
+                            android:padding="8dp" />
                     </LinearLayout>
 
                     <LinearLayout
@@ -307,25 +312,30 @@
                             android:id="@+id/bleftBtn"
                             android:layout_width="50dp"
                             android:layout_height="50dp"
-
-                            android:background="@color/transparent"
-                            android:foreground="@drawable/back_turn_left_arrow_icon" />
+                            android:background="@drawable/rounded_corner"
+                            android:src="@drawable/back_turn_left_arrow_icon"
+                            android:scaleType="fitCenter"
+                            android:padding="8dp" />
 
                         <ImageButton
                             android:id="@+id/downBtn"
                             android:layout_width="50dp"
                             android:layout_height="50dp"
                             android:layout_marginStart="15dp"
-                            android:background="@color/transparent"
-                            android:foreground="@drawable/poke_down" />
+                            android:background="@drawable/rounded_corner"
+                            android:src="@drawable/down_arrow"
+                            android:scaleType="fitCenter"
+                            android:padding="8dp" />
 
                         <ImageButton
                             android:id="@+id/brightBtn"
                             android:layout_width="50dp"
                             android:layout_height="50dp"
                             android:layout_marginStart="15dp"
-                            android:background="@color/transparent"
-                            android:foreground="@drawable/back_turn_right_arrow_icon" />
+                            android:background="@drawable/rounded_corner"
+                            android:src="@drawable/back_turn_right_arrow_icon"
+                            android:scaleType="fitCenter"
+                            android:padding="8dp" />
                     </LinearLayout>
                 </LinearLayout>
 

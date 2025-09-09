@@ -31,6 +31,10 @@ import android.widget.ToggleButton;
 import androidx.annotation.Nullable;
 import androidx.compose.runtime.external.kotlinx.collections.immutable.implementations.immutableMap.*;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -379,7 +383,7 @@ public class GridMap extends View {
                     //This makes the coordinates adjustable instead of static
                     op.inMutable = true;
                     //change icon pic
-                    bm = BitmapFactory.decodeResource(getResources(), R.drawable.poke_up, op);
+                    bm = BitmapFactory.decodeResource(getResources(), R.drawable.black, op);
 
                     mapscalable = Bitmap.createScaledBitmap(bm, 51, 51, true);
                     xCoord = cells[curCoord[0] - 1][20 - androidRowCoord].startX;
@@ -388,7 +392,7 @@ public class GridMap extends View {
                     break;
                 case "down":
                     op.inMutable = true;
-                    bm = BitmapFactory.decodeResource(getResources(), R.drawable.poke_down, op);
+                    bm = BitmapFactory.decodeResource(getResources(), R.drawable.black, op);
                     mapscalable = Bitmap.createScaledBitmap(bm, 51, 51, true);
                     xCoord = cells[curCoord[0] - 1][20 - androidRowCoord].startX;
                     yCoord = cells[curCoord[0]][20 - androidRowCoord - 1].startY;
@@ -396,7 +400,7 @@ public class GridMap extends View {
                     break;
                 case "right":
                     op.inMutable = true;
-                    bm = BitmapFactory.decodeResource(getResources(), R.drawable.poke_right, op);
+                    bm = BitmapFactory.decodeResource(getResources(), R.drawable.black, op);
                     mapscalable = Bitmap.createScaledBitmap(bm, 51, 51, true);
                     xCoord = cells[curCoord[0] - 1][20 - androidRowCoord].startX;
                     yCoord = cells[curCoord[0]][20 - androidRowCoord - 1].startY;
@@ -405,7 +409,7 @@ public class GridMap extends View {
                     break;
                 case "left":
                     op.inMutable = true;
-                    bm = BitmapFactory.decodeResource(getResources(), R.drawable.poke_left, op);
+                    bm = BitmapFactory.decodeResource(getResources(), R.drawable.black, op);
                     mapscalable = Bitmap.createScaledBitmap(bm, 51, 51, true);
                     xCoord = cells[curCoord[0] - 1][20 - androidRowCoord].startX;
                     yCoord = cells[curCoord[0]][20 - androidRowCoord - 1].startY;
@@ -616,8 +620,24 @@ public class GridMap extends View {
         int obstacleNumber = GridMap.obstacleCoord.size();
 
         if (((col - 1)) >= 0 && row >= 0) {
-
-            Home.printMessage("OBSTACLE" + "," + obstacleNumber + "," + (col - 1) * 10 + "," + (19 - row) * 10 + "," + (imageBearings.get(19 - row)[col - 1]).toUpperCase() + "\n");
+            // Safely get direction from imageBearings with null checking
+            String direction = "NORTH"; // Default
+            try {
+                int bearingRow = 19 - row;
+                int bearingCol = col - 1;
+                if (bearingRow >= 0 && bearingRow < imageBearings.size() && 
+                    bearingCol >= 0 && bearingCol < imageBearings.get(bearingRow).length) {
+                    String bearing = imageBearings.get(bearingRow)[bearingCol];
+                    if (bearing != null && !bearing.trim().isEmpty()) {
+                        direction = bearing.toUpperCase();
+                    }
+                }
+                showLog("🔍 Using direction: " + direction + " for obstacle at (" + col + "," + row + ")");
+            } catch (Exception e) {
+                showLog("⚠️ Error getting direction, using default NORTH: " + e.getMessage());
+            }
+            
+            sendObstacleJSON(obstacleNumber, (col - 1) * 10, (19 - row) * 10, direction);
 //            BluetoothCommunications.getMessageReceivedTextView().append(Integer.toString((col - 1))+"\n");
 //            BluetoothCommunications.getMessageReceivedTextView().append(Integer.toString((19 - row))+"\n");
 //            BluetoothCommunications.getMessageReceivedTextView().append((imageBearings.get(19 - row)[col - 1]).toUpperCase()+"\n");
@@ -642,6 +662,49 @@ public class GridMap extends View {
 
     private static void showLog(String message) {
         Log.d(TAG, message);
+    }
+
+    // Helper method to send obstacle data in JSON format
+    private static void sendObstacleJSON(int obstacleId, int x, int y, String direction) {
+        try {
+            // Handle null or empty direction
+            if (direction == null || direction.trim().isEmpty()) {
+                direction = "NORTH"; // Default direction
+                showLog(" Direction was null/empty, using default: NORTH");
+            }
+            
+            JSONObject obstacle = new JSONObject();
+            obstacle.put("x", x);
+            obstacle.put("y", y);  
+            obstacle.put("id", obstacleId);
+            obstacle.put("d", direction.trim().toUpperCase());
+            
+            JSONArray obstacles = new JSONArray();
+            obstacles.put(obstacle);
+            
+            JSONObject value = new JSONObject();
+            value.put("obstacles", obstacles);
+            value.put("mode", "0");
+            
+            JSONObject message = new JSONObject();
+            message.put("cat", "obstacles");
+            message.put("value", value);
+            
+            String jsonString = message.toString();
+            showLog(" JSON Created: " + jsonString);
+            showLog(" JSON Length: " + jsonString.length());
+            showLog(" Sending as JSONObject directly (not string)");
+            
+            // Send as JSONObject directly, not as string
+            Home.printMessage(message);
+        } catch (Exception e) {
+            showLog(" Error creating obstacle JSON: " + e.getMessage());
+            showLog(" Exception type: " + e.getClass().getSimpleName());
+            e.printStackTrace();
+            // Fallback to old format if JSON creation fails
+            String safeDirection = (direction != null) ? direction : "NORTH";
+            Home.printMessage("OBSTACLE" + "," + obstacleId + "," + x + "," + y + "," + safeDirection);
+        }
     }
 
     private class Cell {
@@ -745,7 +808,7 @@ public class GridMap extends View {
 
             //updateStatus( obstacleNumber + "," + (initialColumn) + "," + (initialRow) + ", Bearing: " + "-1");
             if (((initialColumn - 1)) >= 0 && ((initialRow - 1)) >= 0) {
-                Home.printMessage("OBSTACLE" + "," + (obstacleid3 + 1) + "," + (initialColumn) * 10 + "," + (initialRow) * 10 + "," + "-1");
+                sendObstacleJSON(obstacleid3 + 1, (initialColumn) * 10, (initialRow) * 10, "-1");
             } else {
                 showLog("out of grid");
             }
@@ -783,7 +846,7 @@ public class GridMap extends View {
                 //updateStatus( obstacleNumber + "," + (initialColumn) + "," + (initialRow) + ", Bearing: " + "-1");
 
                 if (((initialColumn - 1)) >= 0 && ((initialRow - 1)) >= 0) {
-                    Home.printMessage("OBSTACLE" + "," + (obstacleid2 + 1) + "," + (initialColumn) * 10 + "," + (initialRow) * 10 + "," + "-1");
+                    sendObstacleJSON(obstacleid2 + 1, (initialColumn) * 10, (initialRow) * 10, "-1");
                 } else {
                     showLog("out of grid");
                 }
@@ -820,7 +883,8 @@ public class GridMap extends View {
                     //updateStatus(obstacleid+1+ "," + (endColumn-1) + "," + (endRow-1) + ", Bearing: " + tempBearing);
 
                     if (((endColumn - 1)) >= 0 && ((endRow - 1)) >= 0) {
-                        Home.printMessage("OBSTACLE" + "," + (obstacleid + 1) + "," + (endColumn - 1) * 10 + "," + (endRow - 1) * 10 + "," + tempBearing.toUpperCase());
+                        String safeTempBearing = (tempBearing != null && !tempBearing.trim().isEmpty()) ? tempBearing.toUpperCase() : "NORTH";
+                        sendObstacleJSON(obstacleid + 1, (endColumn - 1) * 10, (endRow - 1) * 10, safeTempBearing);
                     } else {
                         showLog("out of grid");
                     }
@@ -968,7 +1032,8 @@ public class GridMap extends View {
                             //updateStatus( (obstacleid+1) + "," + newID + ","+(tCol - 1) + "," + (tRow - 1) + ", Bearing: " + newBearing);
 
                             if (((tCol - 1)) >= 0 && ((tRow - 1)) >= 0) {
-                                Home.printMessage("OBSTACLE" + "," + (obstacleid + 1) + "," + (tCol - 1) * 10 + "," + (tRow - 1) * 10 + "," + newBearing.toUpperCase());
+                                String safeNewBearing = (newBearing != null && !newBearing.trim().isEmpty()) ? newBearing.toUpperCase() : "NORTH";
+                                sendObstacleJSON(obstacleid + 1, (tCol - 1) * 10, (tRow - 1) * 10, safeNewBearing);
                             } else {
                                 showLog("out of grid");
                             }

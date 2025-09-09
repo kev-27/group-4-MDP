@@ -234,15 +234,17 @@ public class Home extends Fragment {
         if (BluetoothConnectionService.BluetoothConnectionStatus) {
             // Use the same JSON detection logic as BluetoothCommunications
             if (isValidJSON(message)) {
-                showLog("Sending as JSON: " + message);
+                showLog("✅ Detected as JSON, using writeJson: " + message);
                 BluetoothConnectionService.writeJson(message);  // This adds \n for JSON
             } else {
-                showLog("Sending as plain text: " + message);
+                showLog("📝 Detected as plain text, using write: " + message);
                 // Ensure newline for message framing
                 String toSend = message.endsWith("\n") ? message : message + "\n";
                 byte[] bytes = toSend.getBytes(Charset.defaultCharset());
                 BluetoothConnectionService.write(bytes);
             }
+        } else {
+            showLog("❌ Bluetooth not connected - message not sent: " + message);
         }
         showLog(message);
         showLog("Exiting printMessage");
@@ -257,17 +259,22 @@ public class Home extends Fragment {
             byte[] bytes = payload.getBytes(Charset.defaultCharset());
             BluetoothConnectionService.write(bytes);
         }
+        showLog("Exiting printMessage");
     }
 
     // Send JSONObject variant (not shown on chat box)
     public static void printMessage(JSONObject message) {
-        showLog("Entering printMessage (JSONObject)");
+        showLog(" Entering printMessage (JSONObject)");
+        showLog(" JSONObject content: " + message.toString());
         editor = sharedPreferences.edit();
         if (BluetoothConnectionService.BluetoothConnectionStatus) {
-            String payload = message.toString() + "\n"; // newline-delimited JSON
-            byte[] bytes = payload.getBytes(Charset.defaultCharset());
-            BluetoothConnectionService.write(bytes);
+            String payload = message.toString(); // Don't add newline here, writeJson will handle it
+            showLog(" Sending JSONObject via writeJson: " + payload);
+            BluetoothConnectionService.writeJson(payload);
+        } else {
+            showLog(" Bluetooth not connected - JSONObject not sent");
         }
+        showLog(" Exiting printMessage (JSONObject)");
     }
 
 
