@@ -1,0 +1,106 @@
+#!/usr/bin/env python3
+import json
+import time
+import requests
+import sys
+
+from logger.logger import logger
+from settings import API_IP, API_PORT
+from communication.android import AndroidMessage
+
+# Import RaspberryPi ONLY for the test cases that need it
+from testrun import RaspberryPi
+
+
+def test_android_comm_only():
+    """Standalone test of Android <-> RPi communication."""
+    rpi = RaspberryPi()
+    try:
+        rpi.android_link.connect()
+        rpi.logger.info("=== Android Communication Test Started ===")
+
+        from multiprocessing import Process
+        rpi.proc_recv_android = Process(target=rpi.recv_android)
+        rpi.proc_android_sender = Process(target=rpi.android_sender)
+
+        rpi.proc_recv_android.start()
+        rpi.proc_android_sender.start()
+
+        rpi.android_queue.put(AndroidMessage("info", "RPi test connection active"))
+        rpi.android_queue.put(AndroidMessage("mode", "test"))
+
+        while True:
+            time.sleep(1)
+    except KeyboardInterrupt:
+        rpi.logger.info("Keyboard interrupt received, shutting down.")
+    finally:
+        rpi.android_link.disconnect()
+        if rpi.proc_recv_android: rpi.proc_recv_android.kill()
+        if rpi.proc_android_sender: rpi.proc_android_sender.kill()
+        rpi.logger.info("=== Android Communication Test Ended ===")
+
+
+def test_algo_comm_only():
+    """Standalone Algo API test (no Android or STM needed)."""
+    logger.info("=== Algo Communication Test Started ===")
+
+    TEST_OBSTACLES = {
+        "obstacles": [
+            {"x": 2, "y": 5, "id": 1, "d": 1},
+            {"x": 7, "y": 3, "id": 2, "d": 2},
+        ]
+    }
+    body = {
+        **TEST_OBSTACLES,
+        "big_turn": "0",
+        "robot_x": 1,
+        "robot_y": 1,
+        "robot_dir": 0,
+        "retrying": False,
+    }
+
+    url = f"http://{API_IP}:{API_PORT}/path"
+    try:
+        response = requests.post(url, json=body)
+        logger.info(f"Algo API status: {response.status_code}")
+        if response.status_code == 200:
+            logger.info(f"Algo API response: {json.dumps(response.json(), indent=4)}")
+        else:
+            logger.error(f"Algo API error: {response.text}")
+    except Exception as e:
+        logger.error(f"Algo API connection failed: {e}")
+
+
+def test_stm_comm_only():
+    """Standalone STM32 communication test."""
+    rpi = RaspberryPi()
+    rpi.logger.info("=== STM32 Communication Test Started ===")
+
+    from multiprocessing import Process
+    rpi.proc_command_follower = Process(target=rpi.command_follower)
+    rpi.proc_command_follower.start()
+
+    TEST_COMMANDS = ["FW10", "BW10", "FR00", "FIN"]
+    for cmd in TEST_COMMANDS:
+        rpi.logger.debug(f"Enqueuing command: {cmd}")
+        rpi.command_queue.put(cmd)
+
+    rpi.unpause.set()
+
+    time.sleep(2)
+
+    rpi.proc_command_follower.terminate()
+    rpi.proc_command_follower.join()
+    rpi.logger.info("=== STM32 Communication Test Ended ===")
+
+
+if __name__ == "__main__":
+    if "--test-android" in sys.argv:
+        test_android_comm_only()
+    elif "--test-algo" in sys.argv:
+        test_algo_comm_only()
+    elif "--test-stm" in sys.argv:
+        test_stm_comm_only()
+    else:
+        print("Usage: python tests.py [--test-android | --test-algo | --test-stm]")
+
