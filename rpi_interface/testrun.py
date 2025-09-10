@@ -212,13 +212,14 @@ class RaspberryPi:
             try:
                 return json.loads(msg_str)
             except json.JSONDecodeError:
-                logger.warning(f"Received corrupted / invalid JSON: {msg_str!r}")
+                self.logger.warning(f"Received corrupted / invalid JSON: {msg_str!r}")
                 return None
 
         while True:
             msg_str: Optional[str] = None
             try:
                 msg_str = self.android_link.recv()
+                self.logger.debug(f"Recevied raw: {msg_str!r}")
             except OSError:
                 self.android_dropped.set()
                 self.logger.debug("Event set: Android connection dropped")
@@ -232,7 +233,7 @@ class RaspberryPi:
                 self.logger.debug("in recv_android: msg is none or corrupted")
                 continue
 
-            self.logger.debug(f"in recv_android: received json: {message}")
+            self.logger.debug(f"in recv_android: received json: {message!r}")
 
             ## Command: Set obstacles ##
             if message["cat"] == "obstacles":
