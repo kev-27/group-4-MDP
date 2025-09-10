@@ -232,19 +232,37 @@ public class Home extends Fragment {
         editor = sharedPreferences.edit();
 
         if (BluetoothConnectionService.BluetoothConnectionStatus) {
+            // Check if this is an obstacle message and convert to JSON
+            if (message.startsWith("OBSTACLE,")) {
+                showLog(" DETECTED OBSTACLE MESSAGE: '" + message + "'");
+                showLog(" Message length: " + message.length());
+                showLog(" Message bytes: " + java.util.Arrays.toString(message.getBytes()));
+                
+                String jsonMessage = convertObstacleToJSON(message);
+                if (jsonMessage != null) {
+                    showLog(" Converted obstacle to JSON: " + jsonMessage);
+                    showLog("SENDING: Calling BluetoothConnectionService.writeJson()...");
+                    BluetoothConnectionService.writeJson(jsonMessage);
+                    showLog(" writeJson() completed");
+                } else {
+                    showLog("ERROR: Failed to convert obstacle to JSON, sending as plain text");
+                    String toSend = message.endsWith("\n") ? message : message + "\n";
+                    byte[] bytes = toSend.getBytes(Charset.defaultCharset());
+                    showLog("FALLBACK: Sending plain text: '" + toSend + "'");
+                    BluetoothConnectionService.write(bytes);
+                }
+            }
             // Use the same JSON detection logic as BluetoothCommunications
-            if (isValidJSON(message)) {
-                showLog("✅ Detected as JSON, using writeJson: " + message);
+            else if (isValidJSON(message)) {
+                showLog("Sending as JSON: " + message);
                 BluetoothConnectionService.writeJson(message);  // This adds \n for JSON
             } else {
-                showLog("📝 Detected as plain text, using write: " + message);
+                showLog("Sending as plain text: " + message);
                 // Ensure newline for message framing
                 String toSend = message.endsWith("\n") ? message : message + "\n";
                 byte[] bytes = toSend.getBytes(Charset.defaultCharset());
                 BluetoothConnectionService.write(bytes);
             }
-        } else {
-            showLog("❌ Bluetooth not connected - message not sent: " + message);
         }
         showLog(message);
         showLog("Exiting printMessage");
@@ -259,22 +277,17 @@ public class Home extends Fragment {
             byte[] bytes = payload.getBytes(Charset.defaultCharset());
             BluetoothConnectionService.write(bytes);
         }
-        showLog("Exiting printMessage");
     }
 
     // Send JSONObject variant (not shown on chat box)
     public static void printMessage(JSONObject message) {
-        showLog(" Entering printMessage (JSONObject)");
-        showLog(" JSONObject content: " + message.toString());
+        showLog("Entering printMessage (JSONObject)");
         editor = sharedPreferences.edit();
         if (BluetoothConnectionService.BluetoothConnectionStatus) {
-            String payload = message.toString(); // Don't add newline here, writeJson will handle it
-            showLog(" Sending JSONObject via writeJson: " + payload);
-            BluetoothConnectionService.writeJson(payload);
-        } else {
-            showLog(" Bluetooth not connected - JSONObject not sent");
+            String payload = message.toString() + "\n"; // newline-delimited JSON
+            byte[] bytes = payload.getBytes(Charset.defaultCharset());
+            BluetoothConnectionService.write(bytes);
         }
-        showLog(" Exiting printMessage (JSONObject)");
     }
 
 
@@ -337,8 +350,97 @@ public class Home extends Fragment {
         directionAxisTextView.setText(sharedPreferences.getString("direction",""));
     }
 
+    // Helper method to convert obstacle string to JSON format
+    private static String convertObstacleToJSON(String obstacleMessage) {
+        try {
+            showLog("DEBUG: Starting JSON conversion for: '" + obstacleMessage + "'");
+            
+            // Remove trailing newline if present
+            String cleanMessage = obstacleMessage.trim();
+            showLog("DEBUG: After trim: '" + cleanMessage + "'");
+            
+            // Parse: OBSTACLE,<id>,<x>,<y>,<direction>
+            String[] parts = cleanMessage.split(",");
+            showLog("DEBUG: Split into " + parts.length + " parts: " + java.util.Arrays.toString(parts));
+            
+            if (parts.length != 5) {
+                showLog("ERROR: Expected 5 parts, got " + parts.length + ": " + java.util.Arrays.toString(parts));
+                return null;
+            }
+            
+            if (!parts[0].equals("OBSTACLE")) {
+                showLog("ERROR: First part should be 'OBSTACLE', got: '" + parts[0] + "'");
+                return null;
+            }
+            
+            int obstacleId = Integer.parseInt(parts[1]);
+            int x = Integer.parseInt(parts[2]);
+            int y = Integer.parseInt(parts[3]);
+            String direction = parts[4].toUpperCase();
+            
+            showLog("DEBUG: Parsed values - ID:" + obstacleId + " X:" + x + " Y:" + y + " DIR:" + direction);
+            
+            // Create JSON structure
+            JSONObject obstacle = new JSONObject();
+            obstacle.put("x", x);
+            obstacle.put("y", y);
+            obstacle.put("id", obstacleId);
+            obstacle.put("d", direction);
+            
+            JSONArray obstacles = new JSONArray();
+            obstacles.put(obstacle);
+            
+            JSONObject value = new JSONObject();
+            value.put("obstacles", obstacles);
+            value.put("mode", "0");
+            
+            JSONObject message = new JSONObject();
+            message.put("cat", "obstacles");
+            message.put("value", value);
+            
+            String result = message.toString();
+            showLog("DEBUG: Final JSON: " + result);
+            return result;
+            
+        } catch (NumberFormatException e) {
+            showLog("ERROR: Number parsing error: " + e.getMessage());
+            showLog("ERROR: Raw message was: '" + obstacleMessage + "'");
+            return null;
+        } catch (Exception e) {
+            showLog("ERROR: General error converting obstacle to JSON: " + e.getMessage());
+            showLog("ERROR: Error type: " + e.getClass().getSimpleName());
+            e.printStackTrace();
+            return null;
+        }
+    }
+
     private static void showLog(String message) {
         Log.d(TAG, message);
+    }
+
+    // TEST METHOD - Call this to verify obstacle JSON conversion
+    public static void testObstacleJSONConversion() {
+        showLog("TEST: TESTING OBSTACLE JSON CONVERSION");
+        
+        // Test the conversion without sending via Bluetooth
+        String testObstacle = "OBSTACLE,1,40,100,NORTH";
+        String convertedJSON = convertObstacleToJSON(testObstacle);
+        
+        showLog("TEST: Original: " + testObstacle);
+        showLog("TEST: Converted: " + convertedJSON);
+        
+        if (convertedJSON != null) {
+            showLog("SUCCESS: Obstacle JSON conversion working!");
+        } else {
+            showLog("ERROR: Obstacle JSON conversion failed!");
+        }
+    }
+
+    // MANUAL TEST - Send a test obstacle message through the full pipeline
+    public static void sendTestObstacle() {
+        showLog("TEST: SENDING TEST OBSTACLE");
+        printMessage("OBSTACLE,99,123,456,EAST");
+        showLog("TEST: Test obstacle sent");
     }
 
     private static boolean isValidJSON(String text) {

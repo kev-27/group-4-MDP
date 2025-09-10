@@ -273,13 +273,12 @@ public class BluetoothConnectionService {
         }
         public void write(byte[] bytes){
             String text = new String(bytes, java.nio.charset.StandardCharsets.UTF_8);
-            Log.d(TAG, "🔶 write: Writing to output stream: "+text);
+            Log.d(TAG, "write: Writing to output stream: "+text);
             try {
                 outStream.write(bytes);
                 outStream.flush(); // Ensure data is sent immediately
-                Log.d(TAG, "🔶 Successfully written and flushed to output stream");
             } catch (IOException e) {
-                Log.e(TAG, "❌ Error writing to output stream. "+e.getMessage());
+                Log.e(TAG, "Error writing to output stream. "+e.getMessage());
             }
         }
 
@@ -308,14 +307,11 @@ public class BluetoothConnectionService {
 
     // Helper to send JSON string, ensures newline and UTF-8 encoding
     public static void writeJson(String json){
-        Log.d(TAG, "🔵 writeJson called with: " + json);
         if (mConnectedThread != null && BluetoothConnectionStatus) {
             String message = json.endsWith("\n") ? json : json + "\n";
-            Log.d(TAG, "🔵 Writing JSON message: " + message);
             mConnectedThread.write(message.getBytes(java.nio.charset.StandardCharsets.UTF_8));
-            Log.d(TAG, "🔵 JSON message written to Bluetooth");
         } else {
-            Log.e(TAG, "❌ writeJson: No active Bluetooth connection. ConnectedThread null: " + (mConnectedThread == null) + ", Status: " + BluetoothConnectionStatus);
+            Log.e(TAG, " writeJson: No active Bluetooth connection. ConnectedThread null: " + (mConnectedThread == null) + ", Status: " + BluetoothConnectionStatus);
         }
     }
 
