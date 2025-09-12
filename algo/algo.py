@@ -118,18 +118,16 @@ class MazeSolver:
 
         for op in self.get_visit_options(len(all_view_positions)):
             # op is binary string of length len(all_view_positions) == len(obstacles)
-            # If index == 1 means the view_positions[index] is selected to visit, otherwise drop
-
-            # Calculate optimal_cost table
-
+            #TLDR OP IS EACH PERMUTATION OF SIMPLY VISITING DIFFERENT OBSTACLES, NOT ACCOUNTING FOR VIEWS
+  
             # Initialize `items` to be a list containing the robot's start state as the first item
             items = [self.robot.get_start_state()]
             # Initialize `cur_view_positions` to be an empty list
-            cur_view_positions = []
+            cur_view_positions = [] #RESET FOR EACH OP COMBI OF VISITING
             
             # print(f"===================\nop = {op}")
             # print("List of obstacle visited: \n")
-
+            
             # For each obstacle
             for idx in range(len(all_view_positions)):
                 # If robot is visiting
@@ -141,20 +139,21 @@ class MazeSolver:
                     #print("obstacle: {}\n".format(self.grid.obstacles[idx]))
 
             # Generate the path cost for the items
-            self.path_cost_generator(items)
+            self.path_cost_generator(items) #COMPUTES AND STORES ALL PAIR DISTANCES FROM ROBOT START TO EACH VIEW, STORING THE PATH AND COST
             combination = []
             self.generate_combination(cur_view_positions, 0, [], combination, [ITERATIONS])
-
-            for c in combination: # run the algo some times ->
+            #TLDR THIS CREATES ALL COMBINATIONS OF VISITING DIFFERENT VIEWS FOR EACH OBSTACLE
+            # E.G. A1,B2,C3 OR B3,A2,C1
+            for c in combination: # ITERATES THROUGH EACH COMBINATION
                 visited_candidates = [0] # add the start state of the robot
 
-                cur_index = 1
+                cur_index = 1 #THIS TRACKS THE INDEX OF EACH PARTICULAR VIEW IN THE ITEMS LIST
                 fixed_cost = 0 # the cost applying for the position taking obstacle pictures
                 for index, view_position in enumerate(cur_view_positions):
                     visited_candidates.append(cur_index + c[index])
                     fixed_cost += view_position[c[index]].penalty
                     cur_index += len(view_position)
-                
+
                 cost_np = np.zeros((len(visited_candidates), len(visited_candidates)))
 
                 for s in range(len(visited_candidates) - 1):
@@ -166,6 +165,7 @@ class MazeSolver:
                         else:
                             cost_np[s][e] = 1e9
                         cost_np[e][s] = cost_np[s][e]
+                #TLDR THIS ADDS THE COST OF EACH PAIR OF OBJECTS E.G. A1 -> B2 OR C3-> A2
                 cost_np[:, 0] = 0
                 _permutation, _distance = solve_tsp_dynamic_programming(cost_np)
                 # print(f"fixed_cost = {fixed_cost}")
@@ -175,19 +175,19 @@ class MazeSolver:
 
                 optimal_path = [items[0]]
                 distance = _distance + fixed_cost
-
+                #START FROM ROBOT'S STATE NODE , THEN ADD THE OBSTACLES IN ORDER
                 for i in range(len(_permutation) - 1):
                     from_item = items[visited_candidates[_permutation[i]]]
                     to_item = items[visited_candidates[_permutation[i + 1]]]
 
                     cur_path = self.path_table[(from_item, to_item)]
-                    for j in range(1, len(cur_path)):
+                    for j in range(1, len(cur_path)): #ADD EACH OBSTACLES X,Y,DIRECTION TO PATH
                         optimal_path.append(CellState(cur_path[j][0], cur_path[j][1], cur_path[j][2]))
 
                     optimal_path[-1].set_screenshot(to_item.screenshot_id)
 
             if optimal_path:
-                # if found optimal path, return
+                # if found optimal path, return, this returns first found optimal path
                 break
 
         return optimal_path, distance
@@ -245,8 +245,9 @@ class MazeSolver:
         neighbors = []
         # Assume that after following this direction, the car direction is EXACTLY md
         for dx, dy, md in MOVE_DIRECTION:
-            if md == direction:  # if the new direction == md
+            if md == direction:  # if the new direction == md, MEANING GO STRAIGHT
                 # Check for valid position
+                #ALL MOVEMENTS ARE JUST 1 UNIT IN X OR Y DIRECTION
                 if self.grid.reachable(x + dx, y + dy):  # go forward;
                     # Get safe cost of destination
                     safe_cost = self.get_safe_cost(x + dx, y + dy)
@@ -258,7 +259,8 @@ class MazeSolver:
                     neighbors.append((x - dx, y - dy, md, safe_cost))
 
             else:  # consider 8 cases
-                
+                #TO ADJUST, WE MUST SEE HOW OUR ROBOT TURNS LEFT/RIGHT AND CORRESPONDING REVERSE TURN
+                #TLDR CONIDER EITHER TURING TOWARD THE DIRECTION OR REVERSING TO END UP FACING DIRECTION
                 # Turning displacement is either 4-2 or 3-1
                 bigger_change = turn_wrt_big_turns[self.big_turn][0]
                 smaller_change = turn_wrt_big_turns[self.big_turn][1]
@@ -397,7 +399,7 @@ class MazeSolver:
                 if (cur_x, cur_y, cur_direction) in visited:
                     continue
 
-                if end.is_eq(cur_x, cur_y, cur_direction):
+                if end.is_eq(cur_x, cur_y, cur_direction): #IF GOAL REACHED
                     record_path(start, end, parent, g_distance[(cur_x, cur_y, cur_direction)])
                     return
 
@@ -405,6 +407,7 @@ class MazeSolver:
                 cur_distance = g_distance[(cur_x, cur_y, cur_direction)]
 
                 for next_x, next_y, new_direction, safe_cost in self.get_neighbors(cur_x, cur_y, cur_direction):
+                #TLDR GOES THROUGH EACH POSSIBLE NEXT MOVEMENT SPOT FROM THE CURRENT SPOT (AFTER ACCOUNTING TURN RADIUS)
                     if (next_x, next_y, new_direction) in visited:
                         continue
 
@@ -415,13 +418,14 @@ class MazeSolver:
 
                     # new cost is calculated by the cost to reach current state + cost to move from
                     # current state to new state + heuristic cost from new state to end state
+                    #CUR+MOVE IS G, COMPUTE_COORD DIST IS H
                     next_cost = cur_distance + move_cost + \
                                 self.compute_coord_distance(next_x, next_y, end.x, end.y)
-
+                    #ADD THE SELECTED NEIGHBOUR'S G INTO ARRAY, OR IF A LOWER G PATH TO THE SELECTED NEIGHBOUR IS FOUND REPLACE IT (AND PARENT TOO)
                     if (next_x, next_y, new_direction) not in g_distance or \
                             g_distance[(next_x, next_y, new_direction)] > cur_distance + move_cost:
                         g_distance[(next_x, next_y, new_direction)] = cur_distance + move_cost
-                        parent[(next_x, next_y, new_direction)] = (cur_x, cur_y, cur_direction)
+                        parent[(next_x, next_y, new_direction)] = (cur_x, cur_y, cur_direction) #TRACK PREV NODE IF NOT CUR NEIGHBOUR IS POINTLESS
 
                         heapq.heappush(heap, (next_cost, next_x, next_y, new_direction))
 

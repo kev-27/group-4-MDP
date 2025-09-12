@@ -87,6 +87,8 @@ class Obstacle(CellState):
 
         # If the obstacle is facing north, then robot's cell state must be facing south
         if self.direction == Direction.NORTH:
+            #TLDR CALCULATES IF THE ENDSTATE IS VALID WHEN THE 
+           # ROBOT IS 3/4 UNITS AWAY WHILE FACING IT, WITH 1 GRID SIDE DEVIATION, RETRYING ALLOWS 5 UNITS AWAY
             if retrying == False:
                 # Or (x, y + 3)
                 if is_valid(self.x, self.y + 1 + EXPANDED_CELL * 2):

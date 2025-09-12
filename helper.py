@@ -15,7 +15,7 @@ def is_valid(center_x: int, center_y: int):
     """
     return center_x > 0 and center_y > 0 and center_x < WIDTH - 1 and center_y < HEIGHT - 1
 
-
+#ACTUAL COMMUNICATOR THAT PASSES COMMAND FOR STM INTO RPI
 def command_generator(states, obstacles):
     """
     This function takes in a list of states and generates a list of commands for the robot to follow
@@ -64,6 +64,8 @@ def command_generator(states, obstacles):
                 current_robot_position = states[i] # {'x': 1, 'y': 8, 'd': <Direction.NORTH: 0>, 's': -1}
 
                 # Obstacle facing WEST, robot facing EAST
+                #THIS ACCOUNTS FOR WHETHER ROBOT IS SLIGHTLY RIGHT,LEFT OR CENTER TO THE PICTURE
+                #TODO: CHECK OUT CAMERA SNAP COMMANDS AND SEE IF IT MATTERS
                 if current_ob_dict['d'] == 6 and current_robot_position.direction == 2:
                     if current_ob_dict['y'] > current_robot_position.y:
                         commands.append(f"SNAP{states[i].screenshot_id}_L")
@@ -114,6 +116,7 @@ def command_generator(states, obstacles):
         # FL00 | FL30: Forward Left;
         # BR00 | BR30: Backward Right;
         # BL00 | BL30: Backward Left;
+        #FINETUNING REQUIRED, MEASURE IN GRID X,Y COORDINATES HOW MUCH OUR ROBOT TURNS
 
         # Facing north previously
         if states[i - 1].direction == Direction.NORTH:
@@ -239,7 +242,7 @@ def command_generator(states, obstacles):
     commands.append("FIN")  
 
     # Compress commands if there are consecutive forward or backward commands
-    compressed_commands = [commands[0]]
+    compressed_commands = [commands[0]] #MAKES IT GO BACKWARD/FORWARD CONTINUOUSLY TO SAVE TIME
 
     for i in range(1, len(commands)):
         # If both commands are BW
