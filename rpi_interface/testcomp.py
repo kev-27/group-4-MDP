@@ -12,6 +12,32 @@ from communication.android import AndroidMessage
 from testrun import RaspberryPi
 
 
+def check_api() -> bool:
+    """Check whether image recognition and algorithm API server is up and running
+
+    Returns:
+        bool: True if running, False if not.
+    """
+    # Check image recognition API
+    url = f"http://{API_IP}:{API_PORT}/status"
+    try:
+        response = requests.get(url, timeout=1)
+        if response.status_code == 200:
+            logger.debug("API is up!")
+            return True
+        return False
+    # If error, then log, and return False
+    except ConnectionError:
+        logger.warning("API Connection Error")
+        return False
+    except requests.Timeout:
+        logger.warning("API Timeout")
+        return False
+    except Exception as e:
+        logger.warning(f"API Exception: {e}")
+        return False
+
+
 def test_android_comm_only():
     """Standalone test of Android <-> RPi communication."""
     rpi = RaspberryPi()
@@ -20,6 +46,7 @@ def test_android_comm_only():
         rpi.logger.info("=== Android Communication Test Started ===")
 
         from multiprocessing import Process
+
         rpi.proc_recv_android = Process(target=rpi.recv_android)
         rpi.proc_android_sender = Process(target=rpi.android_sender)
 
@@ -35,8 +62,10 @@ def test_android_comm_only():
         rpi.logger.info("Keyboard interrupt received, shutting down.")
     finally:
         rpi.android_link.disconnect()
-        if rpi.proc_recv_android: rpi.proc_recv_android.kill()
-        if rpi.proc_android_sender: rpi.proc_android_sender.kill()
+        if rpi.proc_recv_android:
+            rpi.proc_recv_android.kill()
+        if rpi.proc_android_sender:
+            rpi.proc_android_sender.kill()
         rpi.logger.info("=== Android Communication Test Ended ===")
 
 
@@ -59,6 +88,11 @@ def test_algo_comm_only():
         "retrying": False,
     }
 
+    if check_api():
+        logger.info("api is up")
+    else:
+        logger.warning("api is down")
+
     url = f"http://{API_IP}:{API_PORT}/path"
     try:
         response = requests.post(url, json=body)
@@ -77,6 +111,7 @@ def test_stm_comm_only():
     rpi.logger.info("=== STM32 Communication Test Started ===")
 
     from multiprocessing import Process
+
     rpi.proc_command_follower = Process(target=rpi.command_follower)
     rpi.proc_command_follower.start()
 
@@ -102,5 +137,4 @@ if __name__ == "__main__":
     elif "--test-stm" in sys.argv:
         test_stm_comm_only()
     else:
-        print("Usage: python tests.py [--test-android | --test-algo | --test-stm]")
-
+        print("Usage: pyt#hon tests.py [--test-android | --test-algo | --test-stm]")

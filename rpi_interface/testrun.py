@@ -233,8 +233,6 @@ class RaspberryPi:
                 self.logger.debug("in recv_android: msg is none or corrupted")
                 continue
 
-            self.logger.debug(f"in recv_android: received json: {message!r}")
-
             ## Command: Set obstacles ##
             if message["cat"] == "obstacles":
                 self.rpi_action_queue.put(PiAction(**message))
