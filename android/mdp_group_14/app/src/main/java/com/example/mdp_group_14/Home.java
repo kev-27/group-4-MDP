@@ -234,18 +234,38 @@ public class Home extends Fragment {
         if (BluetoothConnectionService.BluetoothConnectionStatus) {
             // Check if this is an obstacle message and convert to JSON
             if (message.startsWith("OBSTACLE,")) {
-                showLog(" DETECTED OBSTACLE MESSAGE: '" + message + "'");
-                showLog(" Message length: " + message.length());
-                showLog(" Message bytes: " + java.util.Arrays.toString(message.getBytes()));
+                showLog("DEBUG: DETECTED OBSTACLE MESSAGE: '" + message + "'");
+                showLog("DEBUG: Message length: " + message.length());
+                showLog("DEBUG: Message bytes: " + java.util.Arrays.toString(message.getBytes()));
                 
                 String jsonMessage = convertObstacleToJSON(message);
                 if (jsonMessage != null) {
-                    showLog(" Converted obstacle to JSON: " + jsonMessage);
+                    showLog("SUCCESS: Converted obstacle to JSON: " + jsonMessage);
                     showLog("SENDING: Calling BluetoothConnectionService.writeJson()...");
                     BluetoothConnectionService.writeJson(jsonMessage);
-                    showLog(" writeJson() completed");
+                    showLog("DEBUG: writeJson() completed");
                 } else {
                     showLog("ERROR: Failed to convert obstacle to JSON, sending as plain text");
+                    String toSend = message.endsWith("\n") ? message : message + "\n";
+                    byte[] bytes = toSend.getBytes(Charset.defaultCharset());
+                    showLog("FALLBACK: Sending plain text: '" + toSend + "'");
+                    BluetoothConnectionService.write(bytes);
+                }
+            }
+            // Check if this is a robot message and convert to JSON
+            else if (message.startsWith("ROBOT,")) {
+                showLog("DEBUG: DETECTED ROBOT MESSAGE: '" + message + "'");
+                showLog("DEBUG: Message length: " + message.length());
+                showLog("DEBUG: Message bytes: " + java.util.Arrays.toString(message.getBytes()));
+                
+                String jsonMessage = convertRobotToJSON(message);
+                if (jsonMessage != null) {
+                    showLog("SUCCESS: Converted robot to JSON: " + jsonMessage);
+                    showLog("SENDING: Calling BluetoothConnectionService.writeJson()...");
+                    BluetoothConnectionService.writeJson(jsonMessage);
+                    showLog("DEBUG: writeJson() completed");
+                } else {
+                    showLog("ERROR: Failed to convert robot to JSON, sending as plain text");
                     String toSend = message.endsWith("\n") ? message : message + "\n";
                     byte[] bytes = toSend.getBytes(Charset.defaultCharset());
                     showLog("FALLBACK: Sending plain text: '" + toSend + "'");
@@ -416,6 +436,62 @@ public class Home extends Fragment {
 
     private static void showLog(String message) {
         Log.d(TAG, message);
+    }
+
+    /**
+     * Convert robot coordinate message to JSON format
+     * Input: "ROBOT,25,30,NORTH"  
+     * Output: JSON string for robot position
+     */
+    private static String convertRobotToJSON(String robotMessage) {
+        try {
+            showLog("DEBUG: Starting robot JSON conversion for: '" + robotMessage + "'");
+            
+            // Remove trailing newline if present
+            String cleanMessage = robotMessage.trim();
+            showLog("DEBUG: After trim: '" + cleanMessage + "'");
+            
+            // Parse: ROBOT,<x>,<y>,<direction>
+            String[] parts = cleanMessage.split(",");
+            showLog("DEBUG: Split into " + parts.length + " parts: " + java.util.Arrays.toString(parts));
+            
+            if (parts.length != 4) {
+                showLog("ERROR: Expected 4 parts, got " + parts.length + ": " + java.util.Arrays.toString(parts));
+                return null;
+            }
+            
+            if (!parts[0].equals("ROBOT")) {
+                showLog("ERROR: First part should be 'ROBOT', got: '" + parts[0] + "'");
+                return null;
+            }
+            
+            int x = Integer.parseInt(parts[1]);
+            int y = Integer.parseInt(parts[2]);
+            String direction = parts[3].toUpperCase();
+            
+            showLog("DEBUG: Parsed robot values - X:" + x + " Y:" + y + " DIR:" + direction);
+            
+            // Create JSON structure
+            JSONObject robotData = new JSONObject();
+            robotData.put("x", x);
+            robotData.put("y", y);
+            robotData.put("d", direction);
+            
+            JSONObject robotJson = new JSONObject();
+            robotJson.put("cat", "robot");
+            robotJson.put("value", robotData);
+            
+            String result = robotJson.toString();
+            showLog("DEBUG: Created robot JSON: " + result);
+            return result;
+            
+        } catch (NumberFormatException e) {
+            showLog("ERROR: Number parsing error in robot coordinates: " + e.getMessage());
+            return null;
+        } catch (Exception e) {
+            showLog("ERROR: Unexpected error during robot JSON conversion: " + e.getMessage());
+            return null;
+        }
     }
 
     // TEST METHOD - Call this to verify obstacle JSON conversion
