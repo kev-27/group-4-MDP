@@ -129,6 +129,36 @@ def test_stm_comm_only():
     rpi.logger.info("=== STM32 Communication Test Ended ===")
 
 
+def test_camera_snap():
+    """Standalone test: snap image, call image recognition API, send result to Android."""
+    rpi = RaspberryPi()
+    rpi.android_link.connect()
+    rpi.logger.info("=== Camera Snap & Android Test Started ===")
+
+    check_api()
+
+    try:
+        # Example obstacle id with signal
+        test_obstacle_id = "1_demo"
+
+        # Snap image and send result to Android
+        rpi.snap_and_rec(test_obstacle_id)
+
+        # Optionally, log what was sent to Android
+        while not rpi.android_queue.empty():
+            msg = rpi.android_queue.get()
+            rpi.logger.info(f"Sent to Android: cat={msg.cat}, value={msg.value}")
+
+        # Short wait to ensure Android can receive message
+        time.sleep(2)
+
+    except KeyboardInterrupt:
+        rpi.logger.info("Keyboard interrupt received, shutting down.")
+    finally:
+        rpi.android_link.disconnect()
+        rpi.logger.info("=== Camera Snap & Android Test Ended ===")
+
+
 if __name__ == "__main__":
     if "--test-android" in sys.argv:
         test_android_comm_only()
@@ -136,5 +166,8 @@ if __name__ == "__main__":
         test_algo_comm_only()
     elif "--test-stm" in sys.argv:
         test_stm_comm_only()
+    elif "--test-snap" in sys.argv:
+        test_camera_snap()
+
     else:
-        print("Usage: pyt#hon tests.py [--test-android | --test-algo | --test-stm]")
+        print("Usage: pyt#hon tests.py [--test-android | --test-algo | --test-stm | --test-snap]")
