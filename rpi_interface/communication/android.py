@@ -123,24 +123,15 @@ class AndroidLink(Link):
         - Cleans up leftover sockets from previous runs.
         - Ensures the Pi is discoverable.
         """
+
         self.logger.info("Bluetooth connection started")
 
-        # Clean up any previous sockets
-        if self.client_sock:
-            try:
-                self.client_sock.close()
-            except Exception:
-                pass
-            self.client_sock = None
-        if self.server_sock:
-            try:
-                self.server_sock.close()
-            except Exception:
-                pass
-            self.server_sock = None
-
         try:
+            self.logger.info("releasing rfcomm bindings")
+            os.system("sudo rfcomm release all")
+
             # Make the Pi discoverable
+            self.logger.info("setting rpi to be discoverable")
             os.system("sudo hciconfig hci0 piscan")
 
             # Initialize server socket
