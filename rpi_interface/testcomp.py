@@ -115,7 +115,7 @@ def test_stm_comm_only():
     rpi.proc_command_follower = Process(target=rpi.command_follower)
     rpi.proc_command_follower.start()
 
-    TEST_COMMANDS = ["FW10", "BW10", "FR00", "FIN"]
+    TEST_COMMANDS = ["FW05", "BW05", "FR00", "FIN"]
     for cmd in TEST_COMMANDS:
         rpi.logger.debug(f"Enqueuing command: {cmd}")
         rpi.command_queue.put(cmd)
@@ -145,6 +145,7 @@ def test_camera_snap():
         rpi.snap_and_rec(test_obstacle_id)
 
         # Optionally, log what was sent to Android
+
         while not rpi.android_queue.empty():
             msg = rpi.android_queue.get()
             rpi.logger.info(f"Sent to Android: cat={msg.cat}, value={msg.value}")
