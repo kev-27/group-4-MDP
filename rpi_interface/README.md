@@ -88,3 +88,72 @@ following is to set up the RPI environment, not for your local machines
 ```bash
 90:EE:C7:E7:D3:72
 ```
+
+---
+
+### Communication 
+
+
+Messages between the Android app and Raspi will be in the following format:
+
+```json
+{"cat": "xxx", "value": "xxx"}
+```
+
+The `cat` (for category) field with the following possible values:
+- `info`: general messages
+- `error`: error messages, usually in response of an invalid action
+- `location`: the current location of the robot (in Path mode)
+- `image-rec`: image recognition results
+- `mode`: the current mode of the robot (`manual` or `path`)
+- `status`: status updates of the robot (`running` or `finished`)
+- `obstacle`: list of obstacles
+
+#### Android to RPi
+
+##### Set Obstacles
+
+The contents of `obstacles` together with the configured turning radius (`settings.py`) will be passed to the Algorithm API.
+
+```json
+{
+    "cat": "obstacles",
+    "value": {
+        "obstacles": [{"x": 5, "y": 10, "id": 1, "d": 2}],
+        "mode": "0"
+    }
+}
+```
+
+RPi will store the received commands and path and make a call to the Algorithm API
+
+##### Start
+
+Signals to the robot to start dispatching the commands (when obstacles were set).
+
+```json
+{"cat": "control", "value": "start"}
+```
+
+If there are no commands in the queue, the RPi will respond with an error:
+
+```json
+{"cat": "error", "value": "Command queue is empty, did you set obstacles?"}
+```
+
+#### rpi to Android
+
+##### Image recognition results
+
+```json
+{"cat": "image-rec", "value": {"image_id": "A", "obstacle_id":  "1"}}
+```
+
+##### Location Updates (ppi to Android)
+
+In Path mode, the robot will periodically notify Android with the updated location of the robot.
+```json
+{"cat": "location", "value": {"x": 1, "y": 1, "d": 0}}
+```
+where `x`, `y` is the location of the robot, and `d` is its direction.
+
