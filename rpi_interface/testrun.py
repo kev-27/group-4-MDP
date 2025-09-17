@@ -472,17 +472,19 @@ class RaspberryPi:
         The response is then forwarded back to the android
         :param obstacle_id_with_signal: the current obstacle ID followed by underscore followed by signal
         """
-      
+
         obstacle_id, signal = obstacle_id_with_signal.split("_")
         self.logger.info(f"Capturing image for obstacle id: {obstacle_id}")
-        self.android_queue.put(AndroidMessage("info", f"Capturing image for obstacle id: {obstacle_id}"))
+        self.android_queue.put(
+            AndroidMessage("info", f"Capturing image for obstacle id: {obstacle_id}")
+        )
 
         filename = f"{int(time.time())}_{obstacle_id}_{signal}.jpg"
         url = f"http://{API_IP}:{API_PORT}/image"
 
         # Capture image with PiCamera
         with PiCamera() as camera:
-            camera.resolution = (640, 480)  # simple resolution, can adjust
+            camera.resolution = (800, 800)  # simple resolution, can adjust
             camera.start_preview()
             time.sleep(0.5)  # let auto-adjust settle
             camera.capture(filename)
@@ -500,15 +502,18 @@ class RaspberryPi:
         # Handle "NA" or successful recognition
         if results["image_id"] == "NA":
             self.failed_obstacles.append(self.obstacles[int(results["obstacle_id"])])
-            self.logger.info(f"Added Obstacle {results['obstacle_id']} to failed obstacles.")
+            self.logger.info(
+                f"Added Obstacle {results['obstacle_id']} to failed obstacles."
+            )
         else:
             self.success_obstacles.append(self.obstacles[int(results["obstacle_id"])])
-            self.logger.info(f"Obstacle {results['obstacle_id']} successfully recognized.")
+            self.logger.info(
+                f"Obstacle {results['obstacle_id']} successfully recognized."
+            )
 
         # Log results
         self.logger.info(f"Image recognition results: {results}")
         self.android_queue.put(AndroidMessage("image-rec", results))
-
 
     def request_algo(self, data, robot_x=1, robot_y=1, robot_dir=0, retrying=False):
         """

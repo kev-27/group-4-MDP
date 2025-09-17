@@ -3,7 +3,7 @@ import json
 import time
 import requests
 import sys
-
+from picamera import PiCamera
 from logger.logger import logger
 from settings import API_IP, API_PORT
 from communication.android import AndroidMessage
@@ -130,34 +130,40 @@ def test_stm_comm_only():
 
 
 def test_camera_snap():
-    """Standalone test: snap image, call image recognition API, send result to Android."""
-    rpi = RaspberryPi()
-    rpi.android_link.connect()
-    rpi.logger.info("=== Camera Snap & Android Test Started ===")
+    """
+    Repeatedly take snapshots and test image recognition API.
+    """
+    logger.info("=== Camera Snap Test Started ===")
 
     check_api()
 
+    img_cnt = 1
+    url = f"http://{API_IP}:{API_PORT}/image"
+
     try:
-        # Example obstacle id with signal
-        test_obstacle_id = "1_demo"
+        while True:
+            input("Press Enter to take photo (Ctrl+C to quit): ")
 
-        # Snap image and send result to Android
-        rpi.snap_and_rec(test_obstacle_id)
+            img_name = f"img_{img_cnt}.jpg"
+            logger.debug("Capturing photo with rpi...")
+            with PiCamera() as camera:
+                camera.resolution = (800, 800)
+                camera.start_preview()
+                time.sleep(0.5)
+                camera.capture(img_name)
+                logger.info(f"Image captured: {img_name}")
 
-        # Optionally, log what was sent to Android
+            img_cnt += 1
 
-        while not rpi.android_queue.empty():
-            msg = rpi.android_queue.get()
-            rpi.logger.info(f"Sent to Android: cat={msg.cat}, value={msg.value}")
-
-        # Short wait to ensure Android can receive message
-        time.sleep(2)
+            logger.debug("Uploading to API...")
+            with open(img_name, "rb") as f:
+                response = requests.post(url, files={"file": f})
+            logger.debug(f"Upload response: {response.status_code}")
 
     except KeyboardInterrupt:
-        rpi.logger.info("Keyboard interrupt received, shutting down.")
-    finally:
-        rpi.android_link.disconnect()
-        rpi.logger.info("=== Camera Snap & Android Test Ended ===")
+        logger.info("Keyboard interrupt received, shutting down.")
+
+    logger.info("=== Camera Snap Test Ended ===")
 
 
 if __name__ == "__main__":
@@ -171,4 +177,6 @@ if __name__ == "__main__":
         test_camera_snap()
 
     else:
-        print("Usage: pyt#hon tests.py [--test-android | --test-algo | --test-stm | --test-snap]")
+        print(
+            "Usage: pyt#hon tests.py [--test-android | --test-algo | --test-stm | --test-snap]"
+        )
