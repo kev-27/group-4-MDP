@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/activity_comms"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="?android:attr/windowBackground"
+    android:focusableInTouchMode="true">
+
+    <RelativeLayout
+        android:id="@+id/relativeLayout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:padding="16dp">
+
+        <!-- Messages container -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_above="@id/messageInputContainer"
+            android:layout_alignParentTop="true"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/messageReceivedTitleTextView"
+                android:layout_width="match_parent"
+                android:layout_height="640dp"
+                android:background="@drawable/rounded_background_light"
+                android:gravity="top|start"
+                android:padding="16dp"
+                android:scrollbars="vertical"
+                android:textColor="@android:color/black"
+                android:textSize="16sp" />
+        </LinearLayout>
+
+        <!-- Input row -->
+        <LinearLayout
+            android:id="@+id/messageInputContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <EditText
+                android:id="@+id/typeBoxEditText"
+                android:layout_width="0dp"
+                android:layout_height="50dp"
+                android:layout_weight="1"
+                android:background="@drawable/rounded_background_light"
+                android:hint="Type a message..."
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp"
+                android:textColor="@android:color/black"
+                android:textSize="14sp" />
+
+            <ImageButton
+                android:id="@+id/messageButton"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
+                android:layout_marginStart="8dp"
+                android:background="@drawable/rounded_button_send"
+                android:contentDescription="Send message"
+                android:scaleType="centerInside"
+                android:src="@drawable/ic_send"
+                app:tint="@color/primaryBlue"/>
+
+        </LinearLayout>
+
+    </RelativeLayout>
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>
+
+
