@@ -400,12 +400,15 @@ public class Home extends Fragment {
             
             showLog("DEBUG: Parsed values - ID:" + obstacleId + " X:" + x + " Y:" + y + " DIR:" + direction);
             
+            // Convert string direction to numeric direction
+            int directionInt = convertDirectionToInt(direction);
+            
             // Create JSON structure
             JSONObject obstacle = new JSONObject();
             obstacle.put("x", x);
             obstacle.put("y", y);
             obstacle.put("id", obstacleId);
-            obstacle.put("d", direction);
+            obstacle.put("d", directionInt);
             
             JSONArray obstacles = new JSONArray();
             obstacles.put(obstacle);
@@ -431,6 +434,27 @@ public class Home extends Fragment {
             showLog("ERROR: Error type: " + e.getClass().getSimpleName());
             e.printStackTrace();
             return null;
+        }
+    }
+
+    // Convert string direction to numeric direction for Algorithm API
+    private static int convertDirectionToInt(String direction) {
+        switch (direction.toUpperCase()) {
+            case "NORTH":
+            case "UP":
+                return 0;
+            case "EAST":
+            case "RIGHT":
+                return 1;
+            case "SOUTH":
+            case "DOWN":
+                return 2;
+            case "WEST":
+            case "LEFT":
+                return 3;
+            default:
+                showLog("WARNING: Unknown direction '" + direction + "', defaulting to NORTH (0)");
+                return 0;
         }
     }
 
@@ -519,6 +543,60 @@ public class Home extends Fragment {
         showLog("TEST: Test obstacle sent");
     }
 
+    // TEST METHOD - Test JSON location message handling
+    public static void testJSONLocationHandling() {
+        showLog("TEST: TESTING JSON LOCATION HANDLING");
+        
+        // Test different location messages
+        String[] testMessages = {
+            "{\"cat\": \"location\", \"value\": {\"x\": 1, \"y\": 1, \"d\": 0}}",  // North
+            "{\"cat\": \"location\", \"value\": {\"x\": 5, \"y\": 3, \"d\": 1}}",  // East
+            "{\"cat\": \"location\", \"value\": {\"x\": 10, \"y\": 15, \"d\": 2}}", // South
+            "{\"cat\": \"location\", \"value\": {\"x\": 0, \"y\": 0, \"d\": 3}}"   // West
+        };
+        
+        for (String testMessage : testMessages) {
+            showLog("TEST: Testing message: " + testMessage);
+            
+            // Simulate the message processing
+            try {
+                JSONObject jsonMessage = new JSONObject(testMessage.trim());
+                if (jsonMessage.has("cat") && jsonMessage.getString("cat").equals("location")) {
+                    JSONObject value = jsonMessage.getJSONObject("value");
+                    int x = value.getInt("x");
+                    int y = value.getInt("y");
+                    int d = value.getInt("d");
+                    
+                    String direction = "";
+                    switch (d) {
+                        case 0: direction = "up"; break;
+                        case 1: direction = "right"; break;
+                        case 2: direction = "down"; break;
+                        case 3: direction = "left"; break;
+                        default: direction = "up"; break;
+                    }
+                    
+                    int gridX = x + 2;
+                    int gridY = 19 - y;
+                    
+                    showLog("TEST: Parsed - X:" + x + " Y:" + y + " D:" + d + " -> GridX:" + gridX + " GridY:" + gridY + " Direction:" + direction);
+                }
+            } catch (Exception e) {
+                showLog("TEST ERROR: " + e.getMessage());
+            }
+        }
+        
+        showLog("TEST: JSON location handling test completed");
+    }
+
+    // MANUAL TEST - Send a test JSON location message through Bluetooth
+    public static void sendTestJSONLocation() {
+        showLog("TEST: SENDING TEST JSON LOCATION MESSAGE");
+        String testLocationMessage = "{\"cat\": \"location\", \"value\": {\"x\": 1, \"y\": 1, \"d\": 0}}";
+        printMessage(testLocationMessage);
+        showLog("TEST: Test JSON location message sent: " + testLocationMessage);
+    }
+
     private static boolean isValidJSON(String text) {
         String trimmed = text.trim();
         if (trimmed.isEmpty()) {
@@ -602,8 +680,57 @@ public class Home extends Fragment {
             if (message.contains("STATUS")) {
                 robotStatusTextView.setText(message.split(":")[1]);
             }
+            // Handle JSON location messages: {"cat": "location", "value": {"x": 1, "y": 1, "d": 0}}
+            else if (message.trim().startsWith("{") && message.contains("\"cat\":\"location\"")) {
+                try {
+                    showLog("DEBUG: Processing JSON location message: " + message);
+                    JSONObject jsonMessage = new JSONObject(message.trim());
+                    
+                    if (jsonMessage.has("cat") && jsonMessage.getString("cat").equals("location")) {
+                        JSONObject value = jsonMessage.getJSONObject("value");
+                        int x = value.getInt("x");
+                        int y = value.getInt("y");
+                        int d = value.getInt("d");
+                        
+                        // Convert direction from numeric to string
+                        String direction = "";
+                        switch (d) {
+                            case 0:
+                                direction = "up";    // North
+                                break;
+                            case 1:
+                                direction = "right"; // East
+                                break;
+                            case 2:
+                                direction = "down";  // South
+                                break;
+                            case 3:
+                                direction = "left";  // West
+                                break;
+                            default:
+                                direction = "up";
+                                break;
+                        }
+                        
+                        showLog("DEBUG: Parsed location - X:" + x + " Y:" + y + " Direction:" + direction + " (d=" + d + ")");
+                        
+                        // Convert coordinates to grid system (add offset and flip Y if needed)
+                        int gridX = x + 2;  // Add offset for grid system
+                        int gridY = 19 - y; // Convert Y coordinate (flip and offset)
+                        
+                        showLog("DEBUG: Converted to grid coordinates - GridX:" + gridX + " GridY:" + gridY);
+                        
+                        // Update robot position
+                        gridMap.setCurCoord(gridX, gridY, direction);
+                        showLog("SUCCESS: Updated robot position from JSON location message");
+                    }
+                } catch (Exception e) {
+                    showLog("ERROR: Failed to parse JSON location message: " + e.getMessage());
+                    e.printStackTrace();
+                }
+            }
             //ROBOT|5,4,EAST (Early version of updating robot position via comms)
-            if(message.contains("ROBOT")) {
+            else if(message.contains("ROBOT")) {
                 String[] cmd = message.split("\\|");
                 String[] sentCoords = cmd[1].split(",");
                 String[] sentDirection = sentCoords[2].split("\\.");

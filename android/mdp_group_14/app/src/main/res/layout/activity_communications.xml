@@ -66,7 +66,7 @@
                     android:paddingBottom="10dp"
                     android:scaleType="fitCenter"
                     android:background="@drawable/custom_button2"
-                    android:src="@drawable/pokemon_msg"/>
+                    android:src="@drawable/send"/>
 
 
             </LinearLayout>
