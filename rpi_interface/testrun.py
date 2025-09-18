@@ -8,6 +8,7 @@ import os
 import requests
 from communication.android import AndroidLink, AndroidMessage
 from communication.stm32 import STMLink
+from communication.translator import android_to_stm
 from consts import SYMBOL_MAP
 from logger.logger import logger
 from settings import API_IP, API_PORT
@@ -277,6 +278,12 @@ class RaspberryPi:
                                 "Command queue is empty, did you set obstacles?",
                             )
                         )
+            
+            elif message["cat"] == "control":
+                if message["value"] in ["forward", "backward", "forward_left", "forward_right", "backward_left", "backward_right"]:
+                   stm_cmd = android_to_stm(message["value"])
+                   self.command_queue.put(stm_cmd)
+
 
     def recv_stm(self) -> None:
         """
