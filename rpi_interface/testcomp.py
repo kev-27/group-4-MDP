@@ -5,8 +5,10 @@ import requests
 import sys
 from picamera import PiCamera
 from logger.logger import logger
-from settings import API_IP, API_PORT
 from communication.android import AndroidMessage
+from communication.stm32 import STMLink
+import serial
+from  settings import API_IP, API_PORT, SERIAL_PORT, BAUD_RATE
 
 # Import RaspberryPi ONLY for the test cases that need it
 from testrun import RaspberryPi
@@ -139,8 +141,7 @@ def test_algo_comm_only():
         logger.error(f"Algo API connection failed: {e}")
 
 
-
-def test_stm_comm_only():
+def test_stm_comm_only_1():
     """Standalone STM32 communication test with custom commands."""
     rpi = RaspberryPi()
     rpi.logger.info("=== STM32 Communication Test Started ===")
@@ -150,11 +151,12 @@ def test_stm_comm_only():
         rpi.stm_link.connect()
 
         from multiprocessing import Process
+
         rpi.proc_command_follower = Process(target=rpi.command_follower)
         rpi.proc_command_follower.start()
 
         # Custom test commands (STM32 prefixes are supported in command_follower)
-        TEST_COMMANDS = ["F0001000", "B0001000", "L0000000", "R0000000", "P0000000", "FIN"]
+        TEST_COMMANDS = ["F0001000", "FIN"]
 
         for cmd in TEST_COMMANDS:
             rpi.logger.debug(f"Enqueuing command: {cmd}")
@@ -175,6 +177,51 @@ def test_stm_comm_only():
             rpi.proc_command_follower.join()
         rpi.stm_link.disconnect()
         rpi.logger.info("=== STM32 Communication Test Ended ===")
+
+
+def test_stm_comm_only():
+    """Continuous STM32 communication test. Keeps sending until Ctrl+C."""
+    rpi = RaspberryPi()
+    rpi.logger.info("=== STM32 Communication Test Started ===")
+
+    try:
+        # Ensure STM connection is established
+        rpi.stm_link.connect()
+
+        # Loop until user interrupts
+        while True:
+            cmd = "R"  # adjust format as per STM firmware
+            rpi.logger.info(f"Sending command to STM32: {cmd.strip()}")
+            rpi.stm_link.send(cmd)
+
+            rpi.logger.debug("sleeping")
+            time.sleep(2)  # avoid spamming too fast, adjust as needed
+            rpi.logger.debug("woke up")
+
+            cmd = "L"  # adjust format as per STM firmware
+            rpi.logger.info(f"Sending command to STM32: {cmd.strip()}")
+            rpi.stm_link.send(cmd)
+            break
+
+        cmd = "S"  # adjust format as per STM firmware
+
+    except KeyboardInterrupt:
+        rpi.logger.info("Keyboard interrupt received, shutting down.")
+    finally:
+        rpi.stm_link.disconnect()
+        rpi.logger.info("=== STM32 Communication Test Ended ===")
+
+
+def test_char():
+       # Open serial connection directly
+    with serial.Serial(SERIAL_PORT, BAUD_RATE, timeout=1) as ser:
+        # Send the character "F" followed by newline
+        ser.write(b"F\n")
+        print("Sent: F")
+
+        # Read a line back from STM32 (e.g., expected "ACK")
+        response = ser.readline().strip().decode("utf-8")
+        print(f"STM32 responded: {response}")
 
 def test_camera_snap():
     """
@@ -224,6 +271,8 @@ if __name__ == "__main__":
         test_camera_snap()
     elif "--test-move" in sys.argv:
         test_manual_control()
+    elif "--test-char" in sys.argv:
+        test_char()
 
     else:
         print(

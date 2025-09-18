@@ -240,13 +240,13 @@ class RaspberryPi:
                 self.logger.debug(f"Set obstacles PiAction added to queue: {message}")
 
             ## manual
-            elif message["cat"] == "manual":
-                self.logger.info(f"manual mode. Command sent: {message["value"]}")
-                self.unpause.set()
-                self.stm_link.send(message["value"])
-                self.android_queue.put(
-                    AndroidMessage("info", f"robot move by{message["value"]}")
-                )
+            # elif message["cat"] == "manual":
+            # `self.logger.info(f"manual mode. Command sent: {message["value"]}")
+            # `self.unpause.set()
+            # self.stm_link.send(message["value"])
+            # self.android_queue.put(
+            # AndroidMessage("info", f"robot move by{message["value"]}")
+            # )
 
             ## Command: Start Moving ##
             elif message["cat"] == "control":
@@ -403,7 +403,7 @@ class RaspberryPi:
                 "B",
                 "L",
                 "R",
-                "P"
+                "P",
             )
             if command.startswith(stm32_prefixes):
                 self.stm_link.send(command)
