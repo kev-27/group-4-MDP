@@ -69,6 +69,40 @@ def test_android_comm_only():
         rpi.logger.info("=== Android Communication Test Ended ===")
 
 
+def test_manual_control():
+    rpi = RaspberryPi()
+    try:
+        rpi.android_link.connect()
+        rpi.logger.info("=== Manual Control Test Started ===")
+
+        from multiprocessing import Process
+
+        rpi.proc_recv_android = Process(target=rpi.recv_android)
+        rpi.proc_android_sender = Process(target=rpi.android_sender)
+        rpi.proc_command_follower = Process(target=rpi.command_follower)
+
+        rpi.proc_recv_android.start()
+        rpi.proc_android_sender.start()
+        rpi.proc_command_follower.start()
+
+        rpi.android_queue.put(AndroidMessage("info", "RPi test connection active"))
+        rpi.android_queue.put(AndroidMessage("mode", "test"))
+
+        while True:
+            time.sleep(1)
+    except KeyboardInterrupt:
+        rpi.logger.info("Keyboard interrupt received, shutting down.")
+    finally:
+        rpi.android_link.disconnect()
+        if rpi.proc_recv_android:
+            rpi.proc_recv_android.kill()
+        if rpi.proc_android_sender:
+            rpi.proc_android_sender.kill()
+        if rpi.proc_command_follower:
+            rpi.proc_command_follower.kill()
+        rpi.logger.info("=== Manual Control Test Ended ===")
+
+
 def test_algo_comm_only():
     """Standalone Algo API test (no Android or STM needed)."""
     logger.info("=== Algo Communication Test Started ===")
@@ -105,29 +139,42 @@ def test_algo_comm_only():
         logger.error(f"Algo API connection failed: {e}")
 
 
+
 def test_stm_comm_only():
-    """Standalone STM32 communication test."""
+    """Standalone STM32 communication test with custom commands."""
     rpi = RaspberryPi()
     rpi.logger.info("=== STM32 Communication Test Started ===")
 
-    from multiprocessing import Process
+    try:
+        # Ensure STM connection is established
+        rpi.stm_link.connect()
 
-    rpi.proc_command_follower = Process(target=rpi.command_follower)
-    rpi.proc_command_follower.start()
+        from multiprocessing import Process
+        rpi.proc_command_follower = Process(target=rpi.command_follower)
+        rpi.proc_command_follower.start()
 
-    TEST_COMMANDS = ["FW05", "BW05", "FR00", "FIN"]
-    for cmd in TEST_COMMANDS:
-        rpi.logger.debug(f"Enqueuing command: {cmd}")
-        rpi.command_queue.put(cmd)
+        # Custom test commands (STM32 prefixes are supported in command_follower)
+        TEST_COMMANDS = ["F0001000", "B0001000", "L0000000", "R0000000", "P0000000", "FIN"]
 
-    rpi.unpause.set()
+        for cmd in TEST_COMMANDS:
+            rpi.logger.debug(f"Enqueuing command: {cmd}")
+            rpi.command_queue.put(cmd)
 
-    time.sleep(2)
+        # Trigger command follower to start processing
+        rpi.unpause.set()
 
-    rpi.proc_command_follower.terminate()
-    rpi.proc_command_follower.join()
-    rpi.logger.info("=== STM32 Communication Test Ended ===")
+        # Let commands run for a bit
+        time.sleep(5)
 
+    except KeyboardInterrupt:
+        rpi.logger.info("Keyboard interrupt received, shutting down.")
+    finally:
+        # Clean up processes and STM link
+        if rpi.proc_command_follower:
+            rpi.proc_command_follower.terminate()
+            rpi.proc_command_follower.join()
+        rpi.stm_link.disconnect()
+        rpi.logger.info("=== STM32 Communication Test Ended ===")
 
 def test_camera_snap():
     """
@@ -175,8 +222,10 @@ if __name__ == "__main__":
         test_stm_comm_only()
     elif "--test-snap" in sys.argv:
         test_camera_snap()
+    elif "--test-move" in sys.argv:
+        test_manual_control()
 
     else:
         print(
-            "Usage: pyt#hon tests.py [--test-android | --test-algo | --test-stm | --test-snap]"
+            "Usage: pyt#hon tests.py [--test-android | --test-algo | --test-stm | --test-snap | --test-move]"
         )
