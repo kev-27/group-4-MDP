@@ -10,10 +10,6 @@ import string
 import numpy as np
 import random
 
-
-torch.serialization.add_safe_globals([np.core.multiarray._reconstruct])
-
-
 def get_random_string(length):
     """
     Generate a random string of fixed length 
