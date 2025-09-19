@@ -16,7 +16,8 @@ export var methodType = {get : 'GET', post : 'POST', put : 'PUT', delete : 'DELE
 
 export default class BaseAPI {	
 	static JSONRequest(api, method, headers, options, content) {
-		const host = "https://mdpapi.kyaw.tech/";
+		const host = "http://localhost:8080/";
+
 
 		let requestOptions = {
 			method: method,
