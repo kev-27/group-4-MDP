@@ -127,8 +127,8 @@ public class GridMap extends View {
         endColor.setColor(Color.RED);
         startColor.setColor(Color.CYAN);
         waypointColor.setColor(Color.GREEN);
-        unexploredColor.setColor(getResources().getColor(R.color.skyBlue));
-        exploredColor.setColor(getResources().getColor(R.color.lighterYellow));
+        unexploredColor.setColor(getResources().getColor(R.color.lightOrange));
+        exploredColor.setColor(getResources().getColor(R.color.lightRedOrange));
         arrowColor.setColor(Color.BLACK);
         fastestPathColor.setColor(Color.MAGENTA);
         Paint newpaint = new Paint();
@@ -490,8 +490,8 @@ public class GridMap extends View {
 
         dir = (direction.equals("up")) ? "NORTH" : (direction.equals("down")) ? "SOUTH" : (direction.equals("left")) ? "WEST" : "EAST";
 
-        if ((col - 2) >= 0 && (row - 1) >= 0) {
-            Home.printMessage("ROBOT" + "," + (col - 2) * 5 + "," + (row - 1) * 5 + "," + dir.toUpperCase());
+        if ((col - 1) >= 0 && (row - 1) >= 0) {
+            Home.printMessage("ROBOT" + "," + (col - 1) + "," + (row - 1) + "," + dir.toUpperCase());
         } else {
             showLog("out of grid");
         }

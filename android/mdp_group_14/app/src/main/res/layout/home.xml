@@ -50,7 +50,7 @@
                     android:gravity="center"
                     android:text="BLUETOOTH"
                     android:textAlignment="center"
-                    android:textColor="@color/black"
+                    android:textColor="@color/lightOrange"
                     android:textStyle="bold" />
                 <!--        app:drawableLeftCompat="@mipmap/left"
         app:drawableRightCompat="@mipmap/right"-->
@@ -59,7 +59,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="5dp"
-                    android:background="@drawable/container_black"
+                    android:background="@drawable/container_orange"
                     android:orientation="vertical">
 
                     <TextView
@@ -70,7 +70,7 @@
                         android:gravity="center"
                         android:text="@string/bluetooth_connection"
                         android:textAlignment="center"
-                        android:textColor="@android:color/holo_red_dark" />
+                        android:textColor="@color/black" />
 
                     <TextView
                         android:id="@+id/bluetoothConnectedDevice"
@@ -92,7 +92,7 @@
                     android:gravity="center"
                     android:text="ROBOT STATUS"
                     android:textAlignment="center"
-                    android:textColor="@color/black"
+                    android:textColor="@color/lightOrange"
                     android:textStyle="bold" />
                 <!--
             app:drawableLeftCompat="@mipmap/left"
@@ -103,12 +103,12 @@
                     android:layout_width="match_parent"
                     android:layout_height="60dp"
                     android:layout_marginTop="5dp"
-                    android:background="@drawable/container_black"
+                    android:background="@drawable/container_orange"
                     android:fontFamily="sans-serif"
                     android:gravity="center"
                     android:text="Ready to Start"
                     android:textAlignment="center"
-                    android:textColor="@color/colorBlack" />
+                    android:textColor="@color/black" />
 
                 <TextView
                     android:id="@+id/directionLabel"
@@ -120,7 +120,7 @@
                     android:gravity="center"
                     android:text="DIRECTION"
                     android:textAlignment="center"
-                    android:textColor="@color/black" />
+                    android:textColor="@color/lightOrange" />
                 <!--
             app:drawableLeftCompat="@mipmap/left"
             app:drawableRightCompat="@mipmap/right"-->
@@ -130,12 +130,12 @@
                     android:layout_width="match_parent"
                     android:layout_height="30dp"
                     android:layout_marginTop="5dp"
-                    android:background="@drawable/container_black"
+                    android:background="@drawable/container_orange"
                     android:fontFamily="sans-serif"
                     android:gravity="center"
                     android:text="None"
                     android:textAlignment="center"
-                    android:textColor="@color/colorBlack" />
+                    android:textColor="@color/black" />
 
                 <TextView
                     android:id="@+id/CoordsLabel"
@@ -147,7 +147,7 @@
                     android:gravity="center"
                     android:text="COORDINATES"
                     android:textAlignment="center"
-                    android:textColor="@color/black" />
+                    android:textColor="@color/lightOrange" />
                 <!--        android:drawableLeft="@mipmap/left"
             android:drawableRight="@mipmap/right"-->
 
@@ -156,7 +156,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="5dp"
-                    android:background="@drawable/container_black"
+                    android:background="@drawable/container_orange"
                     android:orientation="horizontal">
 
                     <TextView
@@ -168,7 +168,7 @@
                         android:paddingStart="25dp"
                         android:text="X:"
                         android:textAlignment="center"
-                        android:textColor="@color/colorBlack"
+                        android:textColor="@color/black"
                         android:textSize="16sp" />
 
                     <TextView
@@ -177,7 +177,7 @@
                         android:layout_height="30dp"
                         android:paddingStart="7dp"
                         android:text="0"
-                        android:textColor="@color/colorBlack"
+                        android:textColor="@color/black"
                         android:textSize="16sp" />
 
                     <TextView
@@ -190,7 +190,7 @@
                         android:paddingStart="20dp"
                         android:text="Y:"
                         android:textAlignment="center"
-                        android:textColor="@color/colorBlack"
+                        android:textColor="@color/black"
                         android:textSize="16sp" />
 
                     <TextView
@@ -199,7 +199,7 @@
                         android:layout_height="30dp"
                         android:paddingStart="7dp"
                         android:text="0"
-                        android:textColor="@color/colorBlack"
+                        android:textColor="@color/black"
                         android:textSize="16sp" />
                 </LinearLayout>
             </LinearLayout>

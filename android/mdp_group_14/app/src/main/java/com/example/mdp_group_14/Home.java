@@ -351,10 +351,10 @@ public class Home extends Fragment {
         //printMessage("Direction is set to " + direction); //OLD VER
 
         dir= (newDir.equals("up"))?"NORTH":(newDir.equals("down"))?"SOUTH":(newDir.equals("left"))?"WEST":"EAST";
-        if ((x - 2)>=0 && (y - 1)>=0)
+        if ((x - 1)>=0 && (y - 1)>=0)
         {
 //          BluetoothCommunications.getMessageReceivedTextView().append("ROBOT" + "," + (col - 2)*5 + "," + (row - 1)*5 + "," + dir.toUpperCase());
-            Home.printMessage("ROBOT" + "," + (x-2)*5 + "," + (y-1)*5 + "," + dir.toUpperCase());
+            Home.printMessage("ROBOT" + "," + (x-1) + "," + (y-1) + "," + dir.toUpperCase());
         }
         else{
             showLog("out of grid");

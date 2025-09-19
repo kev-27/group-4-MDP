@@ -43,61 +43,108 @@
 
                     <ImageButton
                         android:id="@+id/changeDirectionBtn"
-                        android:layout_width="50dp"
-                        android:layout_height="50dp"
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
                         android:layout_marginTop="15dp"
                         android:background="@drawable/border_black"
-                        android:scaleType="centerCrop"
-                        app:srcCompat="@mipmap/compass" />
+                        android:scaleType="fitCenter"
+                        android:padding="2dp"
+                        app:srcCompat="@drawable/compass_2" />
 
                     <ImageButton
                         android:id="@+id/addObstacleBtn"
-                        android:layout_width="50dp"
-                        android:layout_height="50dp"
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
                         android:layout_marginStart="36dp"
                         android:layout_marginTop="15dp"
                         android:background="@drawable/border_black"
-                        android:scaleType="centerCrop"
-
+                        android:scaleType="centerInside"
+                        android:padding="6dp"
                         app:layout_constraintEnd_toEndOf="parent"
-                        app:srcCompat="@mipmap/treeobst" />
+                        app:srcCompat="@drawable/set" />
 
                 </LinearLayout>
 
                 <LinearLayout
-                    android:layout_width="140dp"
+                    android:layout_width="wrap_content"
                     android:layout_marginStart="10dp"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal">>
+                    android:orientation="vertical">
 
-                    <ImageButton
-                        android:id="@+id/saveBtn"
-                        android:layout_width="40dp"
-                        android:layout_height="40dp"
-                        android:layout_marginTop="15dp"
-                        android:scaleType="centerCrop"
-                        android:background="@drawable/save"
-                        />
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:layout_marginBottom="5dp">
 
-                    <ImageButton
-                        android:id="@+id/loadBtn"
-                        android:layout_width="40dp"
-                        android:layout_height="40dp"
-                        android:layout_marginTop="15dp"
-                        android:layout_marginLeft="8dp"
-                        android:scaleType="centerCrop"
-                        android:background="@drawable/load_btn"
-                        />
+                        <ImageButton
+                            android:id="@+id/saveBtn"
+                            android:layout_width="40dp"
+                            android:layout_height="40dp"
+                            android:background="@drawable/save_button_text"
+                            android:contentDescription="Save Map"
+                            />
 
-                    <ImageButton
-                        android:id="@+id/resetBtn"
-                        android:layout_width="40dp"
-                        android:layout_height="40dp"
-                        android:layout_marginTop="15dp"
-                        android:layout_marginLeft="8dp"
-                        android:scaleType="centerCrop"
-                        android:background="@drawable/rst"
-                        />
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Save Map"
+                            android:textSize="12sp"
+                            android:textColor="@android:color/black"
+                            android:layout_gravity="center_vertical"
+                            android:layout_marginStart="8dp"
+                            />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:layout_marginBottom="5dp">
+
+                        <ImageButton
+                            android:id="@+id/loadBtn"
+                            android:layout_width="40dp"
+                            android:layout_height="40dp"
+                            android:background="@drawable/load_button_text"
+                            android:contentDescription="Load Map"
+                            />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Load Map"
+                            android:textSize="12sp"
+                            android:textColor="@android:color/black"
+                            android:layout_gravity="center_vertical"
+                            android:layout_marginStart="8dp"
+                            />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal">
+
+                        <ImageButton
+                            android:id="@+id/resetBtn"
+                            android:layout_width="40dp"
+                            android:layout_height="40dp"
+                            android:background="@drawable/reset_button_text"
+                            android:contentDescription="Reset Map"
+                            />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Reset Map"
+                            android:textSize="12sp"
+                            android:textColor="@android:color/black"
+                            android:layout_gravity="center_vertical"
+                            android:layout_marginStart="8dp"
+                            />
+                    </LinearLayout>
+
                 </LinearLayout>
 
 

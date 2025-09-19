@@ -55,18 +55,15 @@
 
                 <ImageButton
                     android:id="@+id/messageButton"
-                    android:layout_width="75dp"
+                    android:layout_width="80dp"
                     android:layout_height="50dp"
                     android:layout_marginStart="5dp"
                     android:layout_marginTop="5dp"
-                    android:foregroundGravity="center"
-                    android:paddingStart="20dp"
-                    android:paddingTop="10dp"
-                    android:paddingEnd="20dp"
-                    android:paddingBottom="10dp"
-                    android:scaleType="fitCenter"
-                    android:background="@drawable/custom_button2"
-                    android:src="@drawable/send"/>
+                    android:background="@drawable/rounded_corner"
+                    android:src="@drawable/send"
+                    android:scaleType="centerInside"
+                    android:padding="8dp"
+                    android:contentDescription="Send"/>
 
 
             </LinearLayout>
