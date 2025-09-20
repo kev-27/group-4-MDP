@@ -239,14 +239,19 @@ class RaspberryPi:
                 self.rpi_action_queue.put(PiAction(**message))
                 self.logger.debug(f"Set obstacles PiAction added to queue: {message}")
 
-            ## manual
-            # elif message["cat"] == "manual":
-            # `self.logger.info(f"manual mode. Command sent: {message["value"]}")
-            # `self.unpause.set()
-            # self.stm_link.send(message["value"])
-            # self.android_queue.put(
-            # AndroidMessage("info", f"robot move by{message["value"]}")
-            # )
+            elif message["cat"] == "manual":
+                if not self.unpause.is_set():
+                    self.logger.info("Gryo reset!")
+                    self.stm_link.send("RS00")
+                    # Main trigger to start movement #
+                    self.unpause.set()
+                    self.logger.info("Start command received, starting robot on path!")
+                    self.android_queue.put(AndroidMessage("status", "running"))
+
+                cmd = message["value"]
+                self.logger.info(f"Manual command received: {cmd}")
+                self.command_queue.put(cmd)
+                self.android_queue.put(AndroidMessage("info", f"Manual command enqueued: {cmd}"))
 
             ## Command: Start Moving ##
             elif message["cat"] == "control":

@@ -152,11 +152,23 @@ def test_stm_comm_only_1():
 
         from multiprocessing import Process
 
+        rpi.android_link.connect()
+        rpi.logger.info("=== Android Communication Test Started ===")
+
+        rpi.proc_recv_android = Process(target=rpi.recv_android)
+        rpi.proc_android_sender = Process(target=rpi.android_sender)
+
+        rpi.proc_recv_android.start()
+        rpi.proc_android_sender.start()
+
+        rpi.android_queue.put(AndroidMessage("info", "RPi test connection active"))
+        rpi.android_queue.put(AndroidMessage("mode", "test"))
+
         rpi.proc_command_follower = Process(target=rpi.command_follower)
         rpi.proc_command_follower.start()
 
         # Custom test commands (STM32 prefixes are supported in command_follower)
-        TEST_COMMANDS = ["F0001000", "FIN"]
+        TEST_COMMANDS = ["F", "FIN"]
 
         for cmd in TEST_COMMANDS:
             rpi.logger.debug(f"Enqueuing command: {cmd}")
@@ -176,6 +188,11 @@ def test_stm_comm_only_1():
             rpi.proc_command_follower.terminate()
             rpi.proc_command_follower.join()
         rpi.stm_link.disconnect()
+        rpi.android_link.disconnect()
+        if rpi.proc_recv_android:
+            rpi.proc_recv_android.kill()
+        if rpi.proc_android_sender:
+            rpi.proc_android_sender.kill()
         rpi.logger.info("=== STM32 Communication Test Ended ===")
 
 
@@ -259,6 +276,78 @@ def test_camera_snap():
 
     logger.info("=== Camera Snap Test Ended ===")
 
+def test_checklist_C9():
+    try:
+        rpi = RaspberryPi()
+        rpi.android_link.connect()
+        rpi.logger.info("=== Checklist C9 Test Started ===")
+
+        from multiprocessing import Process
+
+        rpi.proc_recv_android = Process(target=rpi.recv_android)
+        rpi.proc_android_sender = Process(target=rpi.android_sender)
+
+        rpi.proc_recv_android.start()
+        rpi.proc_android_sender.start()
+
+        rpi.android_queue.put(AndroidMessage("info", "RPi test connection active"))
+        rpi.android_queue.put(AndroidMessage("mode", "testing checklist C9"))
+
+        while True:
+            obstacleID = input("Enter obstacle ID: ")
+            imgID = input("Enter imgID: ")
+            formatStr = "TARGET" + "," + obstacleID + "," + imgID
+            rpi.logger.debug(f"sending format string: {formatStr}")
+            time.sleep(1)
+
+    except KeyboardInterrupt:
+        rpi.logger.info("keyboard interrupt received, shutting down")
+    finally:
+        rpi.android_link.disconnect()
+        if rpi.proc_recv_android:
+            rpi.proc_recv_android.kill()
+        if rpi.proc_android_sender:
+            rpi.proc_android_sender.kill()
+        rpi.logger.info("=== Checklist C9 Test Ended ===")
+
+
+def test_checklist_C3():
+    rpi = RaspberryPi()
+    rpi.logger.info("=== Checklist C3 Test Started ===")
+
+    try:
+        from multiprocessing import Process
+
+        rpi.stm_link.connect()
+        rpi.android_link.connect()
+        rpi.proc_recv_android = Process(target=rpi.recv_android)
+        rpi.proc_android_sender = Process(target=rpi.android_sender)
+
+        rpi.proc_recv_android.start()
+        rpi.proc_android_sender.start()
+
+        rpi.android_queue.put(AndroidMessage("info", "RPi test connection active"))
+        rpi.android_queue.put(AndroidMessage("mode", "testing checklist C3"))
+
+        rpi.proc_command_follower = Process(target=rpi.command_follower)
+        rpi.proc_command_follower.start()
+
+    except KeyboardInterrupt:
+        rpi.proc_command_queue.put("FIN")
+        rpi.logger.info("Keyboard interrupt received, shutting down.")
+    finally:
+        # Clean up processes and STM link
+        if rpi.proc_command_follower:
+            rpi.proc_command_follower.terminate()
+            rpi.proc_command_follower.join()
+        rpi.stm_link.disconnect()
+        rpi.android_link.disconnect()
+        if rpi.proc_recv_android:
+            rpi.proc_recv_android.kill()
+        if rpi.proc_android_sender:
+            rpi.proc_android_sender.kill()
+        rpi.logger.info("=== Checklist C3 Test Ended ===")
+
 
 if __name__ == "__main__":
     if "--test-android" in sys.argv:
@@ -273,6 +362,12 @@ if __name__ == "__main__":
         test_manual_control()
     elif "--test-char" in sys.argv:
         test_char()
+    elif "--test-a" in sys.argv:
+        test_stm_comm_only_1()
+    elif "--test-C9" in sys.argv:
+        test_checklist_C9()
+    elif "--test-C3" in sys.argv:
+        test_checklist_C3()
 
     else:
         print(
