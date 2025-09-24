@@ -294,10 +294,10 @@ def test_checklist_C9():
         rpi.android_queue.put(AndroidMessage("mode", "testing checklist C9"))
 
         while True:
-            obstacleID = input("Enter obstacle ID: ")
-            imgID = input("Enter imgID: ")
-            formatStr = "TARGET" + "," + obstacleID + "," + imgID
-            rpi.logger.debug(f"sending format string: {formatStr}")
+            obstacleID = int(input("Enter obstacle ID: "))
+            imgID = int(input("Enter imgID: "))
+            json_pair = {"id1": obstacleID, "id2": imgID}
+            rpi.android_queue.put(AndroidMessage("target", json_pair))
             time.sleep(1)
 
     except KeyboardInterrupt:
@@ -349,6 +349,44 @@ def test_checklist_C3():
         rpi.logger.info("=== Checklist C3 Test Ended ===")
 
 
+def test_checklist_C3A():
+    try:
+        rpi = RaspberryPi()
+        rpi.android_link.connect()
+        rpi.logger.info("=== Checklist C3A Test Started ===")
+
+        from multiprocessing import Process
+
+        rpi.proc_recv_android = Process(target=rpi.recv_android)
+        rpi.proc_android_sender = Process(target=rpi.android_sender)
+
+        rpi.proc_recv_android.start()
+        rpi.proc_android_sender.start()
+
+        rpi.android_queue.put(AndroidMessage("info", "RPi test connection active"))
+        rpi.android_queue.put(AndroidMessage("mode", "testing checklist C3A"))
+
+        while True:
+            time.sleep(1)
+            x = int(input("enter x: "))
+            y = int(input("enter y: "))
+            d = int(input("enter d: "))
+            position = {"x": x, "y": y, "d": d}
+            rpi.android_queue.put(AndroidMessage("location", position))
+
+    except KeyboardInterrupt:
+        rpi.logger.info("keyboard interrupt received, shutting down")
+    finally:
+        rpi.android_link.disconnect()
+        if rpi.proc_recv_android:
+            rpi.proc_recv_android.kill()
+        if rpi.proc_android_sender:
+            rpi.proc_android_sender.kill()
+        rpi.logger.info("=== Checklist C9 Test Ended ===")
+
+
+
+
 if __name__ == "__main__":
     if "--test-android" in sys.argv:
         test_android_comm_only()
@@ -368,6 +406,8 @@ if __name__ == "__main__":
         test_checklist_C9()
     elif "--test-C3" in sys.argv:
         test_checklist_C3()
+    elif "--test-C3A" in sys.argv:
+        test_checklist_C3A()
 
     else:
         print(
