@@ -501,6 +501,7 @@ def test_A5():
 
     rpi.logger.info("=== A5 Test Ended ===")
 
+
 if __name__ == "__main__":
     if "--test-android" in sys.argv:
         test_android_comm_only()
