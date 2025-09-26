@@ -495,6 +495,10 @@ def test_A5():
                 rpi.logger.debug("Sending command to STM32...")
                 rpi.stm_link.send("X6969")
                 rpi.logger.debug("Command sent, waiting for next DONEz")
+            else:
+                rpi.logger.debug("Sending stop command to STM32...")
+                rpi.stm_link.send("P6969")
+                rpi.logger.debug("Command sent, waiting for next DONEz")
 
     except KeyboardInterrupt:
         rpi.logger.info("Keyboard interrupt received, shutting down.")
