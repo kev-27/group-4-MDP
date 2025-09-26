@@ -259,6 +259,7 @@ def test_camera_snap():
             img_name = f"img_{img_cnt}.jpg"
             logger.debug("Capturing photo with rpi...")
             with PiCamera() as camera:
+                camera.rotation = 180
                 camera.resolution = (800, 800)
                 camera.start_preview()
                 time.sleep(0.5)
@@ -433,7 +434,9 @@ def test_A4():
         rpi.logger.info("=== STM32 Communication Test Ended ===")
 
 def test_A5():
-    logger.info("=== A5 test  Started ===")
+
+    rpi = RaspberryPi()
+    rpi.logger.info("=== A5 test Started ===")
 
     check_api()
 
@@ -441,14 +444,18 @@ def test_A5():
     url = f"http://{API_IP}:{API_PORT}/image"
 
     try:
-        while True:
+        check_api()
+        rpi.stm_link.connect()
 
-            input("Press Enter to take photo (Ctrl+C to quit): ")
+        id = -1
+
+        while id == -1:
 
             img_name = f"img_{img_cnt}.jpg"
             logger.debug("Capturing photo with rpi...")
             with PiCamera() as camera:
                 camera.resolution = (800, 800)
+                camera.rotation = 180
                 camera.start_preview()
                 time.sleep(0.5)
                 camera.capture(img_name)
@@ -460,6 +467,20 @@ def test_A5():
             with open(img_name, "rb") as f:
                 response = requests.post(url, files={"file": f})
             logger.debug(f"Upload response: {response.status_code}")
+
+            if response.ok:
+                try:
+                    data = response.json()
+                    image_id = data.get("image_id", -1)
+                    logger.info(f"Parsed image_id: {image_id}")
+                except Exception as e:
+                    logger.error(f"Failed to parse JSON: {e}")
+            else:
+                logger.error(f"Upload failed: {response.text}")
+
+            rpi.logger.debug("sending")
+            rpi.stm_link.send("X6969")
+            rpi.logger.debug("sent")
 
     except KeyboardInterrupt:
         logger.info("Keyboard interrupt received, shutting down.")
