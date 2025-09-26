@@ -239,19 +239,19 @@ class RaspberryPi:
                 self.rpi_action_queue.put(PiAction(**message))
                 self.logger.debug(f"Set obstacles PiAction added to queue: {message}")
 
-            elif message["cat"] == "manual":
-                if not self.unpause.is_set():
-                    self.logger.info("Gryo reset!")
-                    self.stm_link.send("RS00")
-                    # Main trigger to start movement #
-                    self.unpause.set()
-                    self.logger.info("Start command received, starting robot on path!")
-                    self.android_queue.put(AndroidMessage("status", "running"))
+            # elif message["cat"] == "manual":
+            # if not self.unpause.is_set():
+            # self.logger.info("Gryo reset!")
+            # self.stm_link.send("RS00")
+            # Main trigger to start movement #
+            # self.unpause.set()
+            # self.logger.info("Start command received, starting robot on path!")
+            # self.android_queue.put(AndroidMessage("status", "running"))
 
-                cmd = message["value"]
-                self.logger.info(f"Manual command received: {cmd}")
-                self.command_queue.put(cmd)
-                self.android_queue.put(AndroidMessage("info", f"Manual command enqueued: {cmd}"))
+            # cmd = message["value"]
+            # self.logger.info(f"Manual command received: {cmd}")
+            # self.command_queue.put(cmd)
+            # self.android_queue.put(AndroidMessage("info", f"Manual command enqueued: {cmd}"))
 
             ## Command: Start Moving ##
             elif message["cat"] == "control":
@@ -301,7 +301,7 @@ class RaspberryPi:
         while True:
             message: str = self.stm_link.recv()
 
-            if message.startswith("ACK"):
+            if message.startswith("DONEz"):
                 if self.rs_flag == False:
                     self.rs_flag = True
                     self.logger.debug("ACK for RS00 from STM32 received.")

@@ -8,7 +8,7 @@ from logger.logger import logger
 from communication.android import AndroidMessage
 from communication.stm32 import STMLink
 import serial
-from  settings import API_IP, API_PORT, SERIAL_PORT, BAUD_RATE
+from settings import API_IP, API_PORT, SERIAL_PORT, BAUD_RATE
 
 # Import RaspberryPi ONLY for the test cases that need it
 from testrun import RaspberryPi
@@ -230,7 +230,7 @@ def test_stm_comm_only():
 
 
 def test_char():
-       # Open serial connection directly
+    # Open serial connection directly
     with serial.Serial(SERIAL_PORT, BAUD_RATE, timeout=1) as ser:
         # Send the character "F" followed by newline
         ser.write(b"F\n")
@@ -239,6 +239,7 @@ def test_char():
         # Read a line back from STM32 (e.g., expected "ACK")
         response = ser.readline().strip().decode("utf-8")
         print(f"STM32 responded: {response}")
+
 
 def test_camera_snap():
     """
@@ -275,6 +276,7 @@ def test_camera_snap():
         logger.info("Keyboard interrupt received, shutting down.")
 
     logger.info("=== Camera Snap Test Ended ===")
+
 
 def test_checklist_C9():
     try:
@@ -385,6 +387,84 @@ def test_checklist_C3A():
         rpi.logger.info("=== Checklist C9 Test Ended ===")
 
 
+def test_A4():
+    cmd = [
+        "W1000",
+        "A0270",
+        "A0090",
+        "A0360",
+        "A0120",
+        "D0270",
+        "D0120",
+        "D0360",
+        "D0090",
+        "SEX",
+    ]
+
+    rpi = RaspberryPi()
+    rpi.logger.info("=== STM32 Communication Test Started ===")
+
+    try:
+        # Ensure STM connection is established
+        rpi.stm_link.connect()
+
+        # Loop until user interrupts
+        while True:
+            for i, v in enumerate(cmd):
+                print(f"index: {i}, cmd: {v}")
+
+            num = -1
+
+            while num == -1:
+                num = int(input("Enter the index: "))
+                if not 0 <= num <= len(cmd) - 1:
+                    num = -1
+                if num == -1:
+                    continue
+
+                rpi.logger.debug("sending")
+                rpi.stm_link.send(cmd[num])
+                rpi.logger.debug("sent")
+
+    except KeyboardInterrupt:
+        rpi.logger.info("Keyboard interrupt received, shutting down.")
+    finally:
+        rpi.stm_link.disconnect()
+        rpi.logger.info("=== STM32 Communication Test Ended ===")
+
+def test_A5():
+    logger.info("=== A5 test  Started ===")
+
+    check_api()
+
+    img_cnt = 1
+    url = f"http://{API_IP}:{API_PORT}/image"
+
+    try:
+        while True:
+
+            input("Press Enter to take photo (Ctrl+C to quit): ")
+
+            img_name = f"img_{img_cnt}.jpg"
+            logger.debug("Capturing photo with rpi...")
+            with PiCamera() as camera:
+                camera.resolution = (800, 800)
+                camera.start_preview()
+                time.sleep(0.5)
+                camera.capture(img_name)
+                logger.info(f"Image captured: {img_name}")
+
+            img_cnt += 1
+
+            logger.debug("Uploading to API...")
+            with open(img_name, "rb") as f:
+                response = requests.post(url, files={"file": f})
+            logger.debug(f"Upload response: {response.status_code}")
+
+    except KeyboardInterrupt:
+        logger.info("Keyboard interrupt received, shutting down.")
+
+    logger.info("=== Camera Snap Test Ended ===")
 
 
 if __name__ == "__main__":
@@ -408,6 +488,10 @@ if __name__ == "__main__":
         test_checklist_C3()
     elif "--test-C3A" in sys.argv:
         test_checklist_C3A()
+    elif "--test-A4" in sys.argv:
+        test_A4()
+    elif "--test-A5" in sys.argv:
+        test_A5()
 
     else:
         print(

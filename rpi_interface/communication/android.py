@@ -75,7 +75,9 @@ class AndroidLink(Link):
                 profiles=[bluetooth.SERIAL_PORT_PROFILE],
             )
 
-            self.logger.info(f"Awaiting Bluetooth connection on RFCOMM channel {port}...")
+            self.logger.info(
+                f"Awaiting Bluetooth connection on RFCOMM channel {port}..."
+            )
             self.client_sock, client_info = self.server_sock.accept()
             self.logger.info(f"Accepted Bluetooth connection from {client_info}")
 
@@ -129,4 +131,3 @@ class AndroidLink(Link):
         except Exception as e:
             self.logger.error(f"Error receiving message from Android: {e}")
             raise
-
