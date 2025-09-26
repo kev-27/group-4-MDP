@@ -433,8 +433,8 @@ def test_A4():
         rpi.stm_link.disconnect()
         rpi.logger.info("=== STM32 Communication Test Ended ===")
 
-def test_A5():
 
+def test_A5():
     rpi = RaspberryPi()
     rpi.logger.info("=== A5 test Started ===")
 
@@ -447,46 +447,59 @@ def test_A5():
         check_api()
         rpi.stm_link.connect()
 
-        id = -1
+        image_id = -1
 
-        while id == -1:
+        while image_id == -1:
 
+            # === Wait for STM32 DONEz before doing anything ===
+            rpi.logger.debug("Waiting for STM32 DONEz...")
+            ack = None
+            while ack != "DONEz":
+                ack = rpi.stm_link.recv()
+                if ack is None:
+                    rpi.logger.warning("No ACK received yet...")
+                else:
+                    rpi.logger.debug(f"Received from STM32: {ack}")
+
+            # === Capture photo ===
             img_name = f"img_{img_cnt}.jpg"
-            logger.debug("Capturing photo with rpi...")
+            rpi.logger.debug("Capturing photo with rpi...")
             with PiCamera() as camera:
                 camera.resolution = (800, 800)
                 camera.rotation = 180
                 camera.start_preview()
                 time.sleep(0.5)
                 camera.capture(img_name)
-                logger.info(f"Image captured: {img_name}")
+                rpi.logger.info(f"Image captured: {img_name}")
 
             img_cnt += 1
 
-            logger.debug("Uploading to API...")
+            # === Upload to API ===
+            rpi.logger.debug("Uploading to API...")
             with open(img_name, "rb") as f:
                 response = requests.post(url, files={"file": f})
-            logger.debug(f"Upload response: {response.status_code}")
+            rpi.logger.debug(f"Upload response: {response.status_code}")
 
             if response.ok:
                 try:
                     data = response.json()
                     image_id = data.get("image_id", -1)
-                    logger.info(f"Parsed image_id: {image_id}")
+                    rpi.logger.info(f"Parsed image_id: {image_id}")
                 except Exception as e:
-                    logger.error(f"Failed to parse JSON: {e}")
+                    rpi.logger.error(f"Failed to parse JSON: {e}")
             else:
-                logger.error(f"Upload failed: {response.text}")
+                rpi.logger.error(f"Upload failed: {response.text}")
 
-            rpi.logger.debug("sending")
-            rpi.stm_link.send("X6969")
-            rpi.logger.debug("sent")
+            # === If still no valid id, tell STM32 to move again ===
+            if image_id == -1:
+                rpi.logger.debug("Sending command to STM32...")
+                rpi.stm_link.send("X6969")
+                rpi.logger.debug("Command sent, waiting for next DONEz")
 
     except KeyboardInterrupt:
-        logger.info("Keyboard interrupt received, shutting down.")
+        rpi.logger.info("Keyboard interrupt received, shutting down.")
 
-    logger.info("=== Camera Snap Test Ended ===")
-
+    rpi.logger.info("=== A5 Test Ended ===")
 
 if __name__ == "__main__":
     if "--test-android" in sys.argv:
