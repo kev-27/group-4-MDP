@@ -32,6 +32,66 @@ class MazeSolver:
             self.big_turn = 0
         else:
             self.big_turn = int(big_turn)
+    def _id_to_coord_map(self):
+        return {ob.obstacle_id: (ob.x, ob.y) for ob in self.grid.obstacles}
+
+    @staticmethod
+    def _dir_to_delta(d):
+        """Direction -> (dx, dy) for the front/marker cell."""
+        if d == Direction.NORTH: return (0, 1)
+        if d == Direction.EAST:  return (1, 0)
+        if d == Direction.SOUTH: return (0,-1)
+        if d == Direction.WEST:  return (-1,0)
+        return (0, 0)
+
+    def extract_visit_order(self, optimal_path):
+        """
+        Walks the chosen optimal_path and returns a list of (obstacle_id, x, y)
+        in the exact order obstacles are first scanned.
+        """
+        id2coord = self._id_to_coord_map()
+        seen_ids = set()
+        seen_coords = set()
+        order = []  # [(id, x, y), ...]
+
+        for st in (optimal_path or []):
+            # Preferred: explicit id on the state (either 'screenshot_id' or 's')
+            sid = getattr(st, "screenshot_id", None)
+            if sid is None:
+                sid = getattr(st, "s", None)  # some serializers put it here
+
+            if isinstance(sid, int) and sid != -1:
+                if sid not in seen_ids:
+                    xy = id2coord.get(sid)
+                    if xy is not None:
+                        order.append((sid, xy[0], xy[1]))
+                    else:
+                        # id unknown -> append id with None coords
+                        order.append((sid, None, None))
+                    seen_ids.add(sid)
+                continue
+
+            # Fallback: infer by looking at the front cell and matching to an obstacle
+            # Requires the state to carry x,y,direction
+            dx, dy = self._dir_to_delta(getattr(st, "direction", None))
+            ox = getattr(st, "x", None)
+            oy = getattr(st, "y", None)
+            if ox is None or oy is None:  # can't infer
+                continue
+            ox += dx
+            oy += dy
+
+            # Match front cell to an obstacle coordinate
+            for ob in self.grid.obstacles:
+                if ob.x == ox and ob.y == oy:
+                    key = (ob.id, ox, oy)
+                    if key not in seen_coords and ob.id not in seen_ids:
+                        order.append((ob.id, ox, oy))
+                        seen_coords.add(key)
+                        seen_ids.add(ob.id)
+                    break
+
+        return order  # e.g. [(3, 5, 9), (7, 12, 2), ...]
 
     def add_obstacle(self, x: int, y: int, direction: Direction, obstacle_id: int):
         """Add obstacle to MazeSolver object
@@ -124,7 +184,7 @@ class MazeSolver:
             items = [self.robot.get_start_state()]
             # Initialize `cur_view_positions` to be an empty list
             cur_view_positions = [] #RESET FOR EACH OP COMBI OF VISITING
-            
+            cur_obstacle_ids = [] #EMPTY OBSTACLE ID ORDER
             # print(f"===================\nop = {op}")
             # print("List of obstacle visited: \n")
             
@@ -179,17 +239,15 @@ class MazeSolver:
                 for i in range(len(_permutation) - 1):
                     from_item = items[visited_candidates[_permutation[i]]]
                     to_item = items[visited_candidates[_permutation[i + 1]]]
-
+                 
                     cur_path = self.path_table[(from_item, to_item)]
                     for j in range(1, len(cur_path)): #ADD EACH OBSTACLES X,Y,DIRECTION TO PATH
                         optimal_path.append(CellState(cur_path[j][0], cur_path[j][1], cur_path[j][2]))
 
                     optimal_path[-1].set_screenshot(to_item.screenshot_id)
-
             if optimal_path:
                 # if found optimal path, return, this returns first found optimal path
                 break
-
         return optimal_path, distance
 
     @staticmethod
@@ -433,6 +491,7 @@ class MazeSolver:
         for i in range(len(states) - 1):
             for j in range(i + 1, len(states)):
                 astar_search(states[i], states[j])
+
 
 if __name__ == "__main__":
     pass

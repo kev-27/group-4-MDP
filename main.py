@@ -44,6 +44,8 @@ def path_finding():
     start = time.time()
     # Get shortest path
     optimal_path, distance = maze_solver.get_optimal_order_dp(retrying=retrying)
+    visitorder = maze_solver.extract_visit_order(optimal_path)
+   
     print(f"Time taken to find shortest path using A* search: {time.time() - start}s")
     print(f"Distance to travel: {distance} units")
     
@@ -70,7 +72,11 @@ def path_finding():
         "data": {
             'distance': distance,
             'path': path_results,
-            'commands': commands
+            'commands': commands,
+            "visit_order": [
+                {"id": oid, "x": x, "y": y}
+                for (oid, x, y) in visitorder
+            ],
         },
         "error": None
     })

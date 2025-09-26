@@ -44,14 +44,14 @@ def command_generator(states, obstacles):
         if states[i].direction == states[i - 1].direction:
             # Forward - Must be (east facing AND x value increased) OR (north facing AND y value increased)
             if (states[i].x > states[i - 1].x and states[i].direction == Direction.EAST) or (states[i].y > states[i - 1].y and states[i].direction == Direction.NORTH):
-                commands.append("FW10")
+                commands.append("W0100")
             # Forward - Must be (west facing AND x value decreased) OR (south facing AND y value decreased)
             elif (states[i].x < states[i-1].x and states[i].direction == Direction.WEST) or (
                     states[i].y < states[i-1].y and states[i].direction == Direction.SOUTH):
-                commands.append("FW10")
+                commands.append("W0100")
             # Backward - All other cases where the previous and current state is the same direction
             else:
-                commands.append("BW10")
+                commands.append("S0100")
 
             # If any of these states has a valid screenshot ID, then add a SNAP command as well to take a picture
             if states[i].screenshot_id != -1:
@@ -124,61 +124,77 @@ def command_generator(states, obstacles):
             if states[i].direction == Direction.EAST:
                 # y value increased -> Forward Right
                 if states[i].y > states[i - 1].y:
-                    commands.append("FR{}".format(steps))
+                    #commands.append("FR{}".format(steps)) OG FORWARD RIGHT
+                    commands.append("D0090") #ASSUME 90 DEGREES
                 # y value decreased -> Backward Left
                 else:
-                    commands.append("BL{}".format(steps))
+                    #commands.append("BL{}".format(steps)) OG BACKWARD LEFT
+                    commands.append("Z0090") #ASSUME 90
             # Facing west afterwards
             elif states[i].direction == Direction.WEST:
                 # y value increased -> Forward Left
                 if states[i].y > states[i - 1].y:
-                    commands.append("FL{}".format(steps))
+                    #commands.append("FL{}".format(steps)) OG FORWARD LEFT
+                    commands.append("A0090") #ASSUME 90 DEGREES
                 # y value decreased -> Backward Right
                 else:
-                    commands.append("BR{}".format(steps))
+                    #commands.append("BR{}".format(steps)) OG BACK RIGHT
+                    commands.append("C0090") #ASSUME 90 degrees
             else:
                 raise Exception("Invalid turing direction")
 
         elif states[i - 1].direction == Direction.EAST:
             if states[i].direction == Direction.NORTH:
                 if states[i].y > states[i - 1].y:
-                    commands.append("FL{}".format(steps))
+                    #commands.append("FL{}".format(steps))
+                    commands.append("A0090")
                 else:
-                    commands.append("BR{}".format(steps))
+                    #commands.append("BR{}".format(steps))
+                    commands.append("C0090")
 
             elif states[i].direction == Direction.SOUTH:
                 if states[i].y > states[i - 1].y:
-                    commands.append("BL{}".format(steps))
+                    #commands.append("BL{}".format(steps))
+                    commands.append("Z0090")
                 else:
-                    commands.append("FR{}".format(steps))
+                    #commands.append("FR{}".format(steps))
+                    commands.append("D0090")
             else:
                 raise Exception("Invalid turing direction")
 
         elif states[i - 1].direction == Direction.SOUTH:
             if states[i].direction == Direction.EAST:
                 if states[i].y > states[i - 1].y:
-                    commands.append("BR{}".format(steps))
+                    #commands.append("BR{}".format(steps))
+                    commands.append("C0090")
                 else:
-                    commands.append("FL{}".format(steps))
+                    #commands.append("FL{}".format(steps))
+                    commands.append("A0090")
             elif states[i].direction == Direction.WEST:
                 if states[i].y > states[i - 1].y:
-                    commands.append("BL{}".format(steps))
+                    #commands.append("BL{}".format(steps))
+                    commands.append("Z0090")
                 else:
-                    commands.append("FR{}".format(steps))
+                    #commands.append("FR{}".format(steps))
+                    commands.append("D0090")
             else:
                 raise Exception("Invalid turing direction")
 
         elif states[i - 1].direction == Direction.WEST:
             if states[i].direction == Direction.NORTH:
                 if states[i].y > states[i - 1].y:
-                    commands.append("FR{}".format(steps))
+                    #commands.append("FR{}".format(steps))
+                    commands.append("D0090")
                 else:
-                    commands.append("BL{}".format(steps))
+                    #commands.append("BL{}".format(steps))
+                    commands.append("Z0090")
             elif states[i].direction == Direction.SOUTH:
                 if states[i].y > states[i - 1].y:
-                    commands.append("BR{}".format(steps))
+                    #commands.append("BR{}".format(steps))
+                    commands.append("C0090")
                 else:
-                    commands.append("FL{}".format(steps))
+                    #commands.append("FL{}".format(steps))
+                    commands.append("A0090")
             else:
                 raise Exception("Invalid turing direction")
         else:
@@ -246,21 +262,26 @@ def command_generator(states, obstacles):
 
     for i in range(1, len(commands)):
         # If both commands are BW
-        if commands[i].startswith("BW") and compressed_commands[-1].startswith("BW"):
+        #if commands[i].startswith("BW") and compressed_commands[-1].startswith("BW"): OG COMMANDS
+        if commands[i].startswith("S") and compressed_commands[-1].startswith("S"):
             # Get the number of steps of previous command
-            steps = int(compressed_commands[-1][2:])
+            #steps = int(compressed_commands[-1][2:]) OG LINE
+            steps = int(compressed_commands[-1][1:])
             # If steps are not 90, add 10 to the steps
-            if steps != 90:
-                compressed_commands[-1] = "BW{}".format(steps + 10)
+            #if steps != 90: OG LINE
+            if steps != 900:
+                #compressed_commands[-1] = "BW{}".format(steps + 10)
+                compressed_commands[-1] = "S{}".format(steps+100)
                 continue
 
         # If both commands are FW
-        elif commands[i].startswith("FW") and compressed_commands[-1].startswith("FW"):
+        #elif commands[i].startswith("FW") and compressed_commands[-1].startswith("FW"): OG LINE
+        elif commands[i].startswith("W") and compressed_commands[-1].startswith("W"):
             # Get the number of steps of previous command
-            steps = int(compressed_commands[-1][2:])
+            steps = int(compressed_commands[-1][1:])
             # If steps are not 90, add 10 to the steps
-            if steps != 90:
-                compressed_commands[-1] = "FW{}".format(steps + 10)
+            if steps != 900:
+                compressed_commands[-1] = "W{}".format(steps + 100)
                 continue
         
         # Otherwise, just add as usual
