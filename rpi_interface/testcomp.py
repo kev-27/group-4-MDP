@@ -468,7 +468,7 @@ def test_A5():
                 camera.resolution = (800, 800)
                 camera.rotation = 180
                 camera.start_preview()
-                time.sleep(0.5)
+                time.sleep(1)
                 camera.capture(img_name)
                 rpi.logger.info(f"Image captured: {img_name}")
 
