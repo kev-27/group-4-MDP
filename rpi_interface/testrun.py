@@ -99,9 +99,9 @@ class RaspberryPi:
         # ======================================================
 
         # ============= child processes ====================
-        self.proc_recv_android = None  # listens incoming msgs from android
+        # self.proc_recv_android = None  # listens incoming msgs from android
         self.proc_recv_stm32 = None  # listens incoming msgs from stm
-        self.proc_android_sender = None
+        # self.proc_android_sender = None
         self.proc_command_follower = None  # movement command
         self.proc_rpi_action = None  # snap images / stitching
         # =================================================
@@ -304,10 +304,10 @@ class RaspberryPi:
             message: str = self.stm_link.recv()
             self.logger.debug(f"Received {message}")
             if message.startswith("DONE"):
-                if self.rs_flag == False:
-                    self.rs_flag = True
-                    self.logger.debug("ACK for RS00 from STM32 received.")
-                    continue
+                # if self.rs_flag == False:
+                    # self.rs_flag = True
+                self.logger.debug("ACK for RS00 from STM32 received.")
+                    # continue
                 try:
                     self.movement_lock.release()
                     try:
@@ -538,17 +538,19 @@ class RaspberryPi:
             return
 
         # Handle "NA" or successful recognition
-        if results["image_id"] == "NA":
-            self.failed_obstacles.append(self.obstacles[int(results["obstacle_id"])])
+        if results["predicted_id"] == "-1":
+            self.failed_obstacles.append(self.obstacles[int(results["num_obstacles"])])
             self.logger.info(
-                f"Added Obstacle {results['obstacle_id']} to failed obstacles."
+                f"Added Obstacle {results['num_obstacles']} to failed obstacles."
             )
         else:
-            self.success_obstacles.append(self.obstacles[int(results["obstacle_id"])])
+            obstacle_id = int(obstacle_id_with_signal.split('_')[0])
+            self.success_obstacles.append(self.obstacles[obstacle_id])
+
             self.logger.info(
-                f"Obstacle {results['obstacle_id']} successfully recognized."
+                f"Obstacle {results['num_obstacles']} successfully recognized."
             )
-            res = f"obstacleID: {int(results['obstacle_id'])}, imageID: {int(results['image_id'])}"
+            res = f"obstacleID: {int(results['num_obstacles'])}, imageID: {int(results['predicted_id'])}"
         # self.android_queue.put(AndroidMessage("target", res))
 
         # Log results

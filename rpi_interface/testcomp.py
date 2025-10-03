@@ -20,8 +20,7 @@ from settings import (
 )
 
 # Import RaspberryPi ONLY for the test cases that need it
-from testrun import RaspberryPi
-
+from testrun import RaspberryPi, PiAction
 
 def check_api() -> bool:
     """Check whether image recognition and algorithm API server is up and running
@@ -300,7 +299,9 @@ def test_camera_snap():
                 response = requests.post(
                     url, files={"file": f}, data={"NUM_OBSTACLES": NUM_OBSTACLES}
                 )
+            results = json.loads(response.content)
             logger.debug(f"Upload response: {response.status_code}")
+            logger.debug(f"{results}")
 
     except KeyboardInterrupt:
         logger.info("Keyboard interrupt received, shutting down.")
@@ -455,9 +456,9 @@ def test_A4():
 
                 rpi.logger.debug("sending")
                 rpi.stm_link.send(cmd[num])
-                # rpi.recv_stm()
                 rpi.logger.debug("sent")
                 rpi.logger.debug("waiting for reply") 
+                # rpi.recv_stm()
 
     except KeyboardInterrupt:
         rpi.logger.info("Keyboard interrupt received, shutting down.")
@@ -539,13 +540,16 @@ def test_A5():
 
 def test_integration():
     """
-    Integration test using the real RaspberryPi.command_follower and rpi_action logic.
-    On KeyboardInterrupt or end, cleans up gracefully.
+    Minimal integration test that:
+    - Requests algo path
+    - Dequeues commands and sends them to STM32 respecting movement lock
+    - Handles STM32 ack via recv_stm
+    - Processes snap commands via rpi_action
     """
-    # Instantiate your RPi wrapper
+
     rpi = RaspberryPi()
 
-    # Connect STM (or mock, but here assume real link)
+    # Connect STM32
     try:
         rpi.stm_link.connect()
         logger.info("STM32 connected")
@@ -553,7 +557,7 @@ def test_integration():
         logger.error("Failed to connect STM32: %s", e)
         return
 
-    # Ensure APIs are up
+    # Check API health
     def check_api():
         try:
             img_ok = requests.get(f"http://{IMG_API_IP}:{IMG_API_PORT}/status", timeout=1).status_code == 200
@@ -564,11 +568,11 @@ def test_integration():
             return False
 
     if not check_api():
-        logger.error("APIs not up. Aborting test.")
+        logger.error("One or more APIs are down. Aborting test.")
         rpi.stm_link.disconnect()
         return
 
-    # Prepare test obstacle data
+    # Sample obstacle data
     TEST_OBS = {
         "obstacles": [
             {"x": 10, "y": 4, "id": 1, "d": 6},
@@ -576,55 +580,66 @@ def test_integration():
         ]
     }
 
-    # In one thread/process: issue the algorithm request to populate commands
-    def issue_algo_request():
-        rpi.request_algo(TEST_OBS, robot_x=1, robot_y=1, robot_dir=0, retrying=False)
+    # Start recv_stm (for unlocking)
+    proc_recv_stm = Process(target=rpi.recv_stm)
+    proc_recv_stm.start()
 
-    # Run the follower and action workers
-    proc_follower = Process(target=rpi.command_follower)
+    # Start rpi_action (for snap and stitch commands)
     proc_action = Process(target=rpi.rpi_action)
+    proc_action.start()
 
     try:
-        # Kick off
-        proc_follower.start()
-        proc_action.start()
+        # Request path
+        rpi.request_algo(TEST_OBS, robot_x=1, robot_y=1, robot_dir=0, retrying=False)
 
-        # Issue the algorithm request (this populates rpi.command_queue)
-        issue_algo_request()
+        logger.info("Starting manual command loop...")
 
-        # Wait until finishing or interrupt
-        while True:
-            # If follower or action died unexpectedly, break
-            if not proc_follower.is_alive() or not proc_action.is_alive():
-                logger.warning("One of the worker processes exited prematurely.")
-                break
-            time.sleep(0.5)
+        while not rpi.command_queue.empty():
+            cmd = rpi.command_queue.get()
+            logger.info(f"Dequeued command: {cmd}")
+
+            # Acquire lock (will be released by recv_stm upon DONE)
+            rpi.movement_lock.acquire()
+
+            if cmd.startswith("SNAP"):
+                # Handle snap separately: push to rpi_action_queue
+                rpi.rpi_action_queue.put(PiAction("snap", cmd.replace("SNAP", "")))
+                logger.info("Snap command forwarded to rpi_action.")
+            else:
+                # Movement command: send to STM
+                rpi.stm_link.send(cmd)
+                logger.info(f"Sent command to STM32: {cmd}")
+
+            # Wait for STM to send DONE and release lock (done in recv_stm)
+            logger.info("Waiting for STM32 ack to release movement lock...")
+            rpi.movement_lock.acquire()  # blocks until recv_stm releases it
+            rpi.movement_lock.release()
+            logger.info("Movement lock released by STM32.")
+
+        logger.info("All commands executed.")
 
     except KeyboardInterrupt:
-        logger.info("KeyboardInterrupt in test, shutting down.")
+        logger.info("Test interrupted by user.")
     except Exception as e:
-        logger.error("Unexpected error in test: %s", e)
+        logger.error(f"Unexpected error: {e}")
     finally:
-        # Clean up / terminate child processes
-        for p in (proc_follower, proc_action):
+        for proc in (proc_recv_stm, proc_action):
             try:
-                if p.is_alive():
-                    p.terminate()
-                p.join(timeout=1)
+                if proc.is_alive():
+                    proc.terminate()
+                proc.join(timeout=1)
             except Exception as e:
-                logger.warning("Error terminating process %s: %s", p, e)
+                logger.warning(f"Failed to cleanly stop process {proc}: {e}")
 
-        # Disconnect STM
         try:
             rpi.stm_link.disconnect()
         except Exception as e:
-            logger.warning("Error disconnecting STM: %s", e)
+            logger.warning(f"Failed to disconnect STM32: {e}")
 
-        logger.info("Test integration done.")
+        logger.info("Test complete.")
 
 if __name__ == "__main__":
     test_integration()
-
 
 if __name__ == "__main__":
     if "--test-android" in sys.argv:
