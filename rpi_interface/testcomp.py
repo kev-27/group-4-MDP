@@ -21,7 +21,7 @@ from settings import (
 from testrun import RaspberryPi
 
 
-def check_api(self) -> bool:
+def check_api() -> bool:
     """Check whether image recognition and algorithm API server is up and running
 
     Returns:
@@ -33,16 +33,16 @@ def check_api(self) -> bool:
     try:
         response = requests.get(image_url, timeout=1)
         if response.status_code == 200:
-            self.logger.debug("Image API is up!")
+            logger.debug("Image API is up!")
             image_ok = True
         else:
-            self.logger.warning("Image API returned non-200 status.")
+            logger.warning("Image API returned non-200 status.")
     except requests.ConnectionError:
-        self.logger.warning("Image recognition API Connection Error")
+        logger.warning("Image recognition API Connection Error")
     except requests.Timeout:
-        self.logger.warning("Image recognition API Timeout")
+        logger.warning("Image recognition API Timeout")
     except Exception as e:
-        self.logger.warning(f"Image API Exception: {e}")
+        logger.warning(f"Image API Exception: {e}")
 
     # Check algorithm API
     algo_ok = False
@@ -50,16 +50,16 @@ def check_api(self) -> bool:
     try:
         response = requests.get(algo_url, timeout=1)
         if response.status_code == 200:
-            self.logger.debug("Algorithm API is up!")
+            logger.debug("Algorithm API is up!")
             algo_ok = True
         else:
             self.logger.warning("Algorithm API returned non-200 status.")
     except requests.ConnectionError:
-        self.logger.warning("Algorithm API Connection Error")
+        logger.warning("Algorithm API Connection Error")
     except requests.Timeout:
-        self.logger.warning("Algorithm API Timeout")
+        logger.warning("Algorithm API Timeout")
     except Exception as e:
-        self.logger.warning(f"Algorithm API Exception: {e}")
+        logger.warning(f"Algorithm API Exception: {e}")
 
     # Only return True if both are OK
     return image_ok and algo_ok
@@ -136,8 +136,14 @@ def test_algo_comm_only():
 
     TEST_OBSTACLES = {
         "obstacles": [
-            {"x": 2, "y": 5, "id": 1, "d": 1},
-            {"x": 7, "y": 3, "id": 2, "d": 2},
+            {"x": 5, "y": 8, "id": 1, "d": 6},
+            {"x": 8, "y": 12, "id": 2, "d": 4},
+            {"x": 1, "y": 18, "id": 3, "d": 4},
+            {"x": 17, "y": 2, "id": 4, "d": 6},
+            {"x": 8, "y": 15, "id": 5, "d": 2},
+            # {"x": 17, "y": 4, "id": 6, "d": 0},
+            # {"x": 18, "y": 19, "id": 7, "d": 4},
+            # {"x": 14, "y": 19, "id": 8, "d": 4},
         ]
     }
     body = {
@@ -275,7 +281,7 @@ def test_camera_snap():
     check_api()
 
     img_cnt = 1
-    url = f"http://{IMG_API_IP}:{IMG_API_PORT}/image"
+    url = f"http://{IMG_API_IP}:{IMG_API_PORT}/upload"
 
     try:
         while True:
@@ -294,8 +300,13 @@ def test_camera_snap():
             img_cnt += 1
 
             logger.debug("Uploading to API...")
+            NUM_OBSTACLES = 3  # or whatever constant you want to send
             with open(img_name, "rb") as f:
-                response = requests.post(url, files={"file": f})
+                response = requests.post(
+                    url,
+                    files={"file": f},
+                    data={"num_obstacles": NUM_OBSTACLES}
+                )
             logger.debug(f"Upload response: {response.status_code}")
 
     except KeyboardInterrupt:

@@ -11,8 +11,8 @@ BAUD_RATE = 115200
 # API_IP = "192.168.44.7"  # IP address of laptop
 IMG_API_IP = "10.13.113.162"
 IMG_API_PORT = 7860
-ALGO_API_IP = ""
-ALGO_API_PORT = ""
+ALGO_API_IP = "10.13.113.129"
+ALGO_API_PORT = "8080"
 
 # ROBOT SETTINGS
 OUTDOOR_BIG_TURN = False  # may need to update
