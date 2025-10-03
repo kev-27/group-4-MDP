@@ -8,7 +8,14 @@ from logger.logger import logger
 from communication.android import AndroidMessage
 from communication.stm32 import STMLink
 import serial
-from settings import API_IP, API_PORT, SERIAL_PORT, BAUD_RATE
+from settings import (
+    IMG_API_IP,
+    IMG_API_PORT,
+    ALGO_API_IP,
+    ALGO_API_PORT,
+    SERIAL_PORT,
+    BAUD_RATE,
+)
 
 # Import RaspberryPi ONLY for the test cases that need it
 from testrun import RaspberryPi
@@ -129,7 +136,7 @@ def test_algo_comm_only():
     else:
         logger.warning("api is down")
 
-    url = f"http://{API_IP}:{API_PORT}/path"
+    url = f"http://{ALGO_API_IP}:{ALGO_API_PORT}/path"
     try:
         response = requests.post(url, json=body)
         logger.info(f"Algo API status: {response.status_code}")
@@ -250,7 +257,7 @@ def test_camera_snap():
     check_api()
 
     img_cnt = 1
-    url = f"http://{API_IP}:{API_PORT}/image"
+    url = f"http://{IMG_API_IP}:{IMG_API_PORT}/image"
 
     try:
         while True:

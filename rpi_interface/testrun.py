@@ -11,7 +11,7 @@ from communication.android import AndroidLink, AndroidMessage
 from communication.stm32 import STMLink
 from consts import SYMBOL_MAP
 from logger.logger import logger
-from settings import API_IP, API_PORT
+from settings import IMG_API_IP, IMG_API_PORT, ALGO_API_IP, ALGO_API_PORT
 import sys
 
 
@@ -500,7 +500,7 @@ class RaspberryPi:
         )
 
         filename = f"{int(time.time())}_{obstacle_id}_{signal}.jpg"
-        url = f"http://{API_IP}:{API_PORT}/image"
+        url = f"http://{IMG_API_IP}:{IMG_API_PORT}/image"
 
         # Capture image with PiCamera
         with PiCamera() as camera:
@@ -551,7 +551,7 @@ class RaspberryPi:
             "robot_dir": robot_dir,
             "retrying": retrying,
         }
-        url = f"http://{API_IP}:{API_PORT}/path"
+        url = f"http://{ALGO_API_IP}:{ALGO_API_PORT}/path"
         response = requests.post(url, json=body)
 
         # Error encountered at the server, return early
@@ -592,7 +592,7 @@ class RaspberryPi:
 
     def request_stitch(self):
         """Sends a stitch request to the image recognition API to stitch the different images together"""
-        url = f"http://{API_IP}:{API_PORT}/stitch"
+        url = f"http://{IMG_API_IP}:{IMG_API_PORT}/stitch"
         response = requests.get(url)
 
         # If error, then log, and send error to Android
@@ -625,22 +625,41 @@ class RaspberryPi:
             bool: True if running, False if not.
         """
         # Check image recognition API
-        url = f"http://{API_IP}:{API_PORT}/status"
+        image_url = f"http://{IMG_API_IP}:{IMG_API_PORT}/status"
         try:
-            response = requests.get(url, timeout=1)
+            response = requests.get(image_url, timeout=1)
             if response.status_code == 200:
-                self.logger.debug("API is up!")
+                self.logger.debug("image API is up!")
                 return True
             return False
         # If error, then log, and return False
         except ConnectionError:
-            self.logger.warning("API Connection Error")
+            self.logger.warning("image recognition API Connection Error")
             return False
         except requests.Timeout:
-            self.logger.warning("API Timeout")
+            self.logger.warning("image recognition API Timeout")
             return False
         except Exception as e:
-            self.logger.warning(f"API Exception: {e}")
+            self.logger.warning(f"image API Exception: {e}")
+            return False
+
+        # Check algo API
+        image_url = f"http://{ALGO_API_IP}:{ALGO_API_PORT}/status"
+        try:
+            response = requests.get(image_url, timeout=1)
+            if response.status_code == 200:
+                self.logger.debug("algo API is up!")
+                return True
+            return False
+        # If error, then log, and return False
+        except ConnectionError:
+            self.logger.warning("algo API Connection Error")
+            return False
+        except requests.Timeout:
+            self.logger.warning("algo recognition API Timeout")
+            return False
+        except Exception as e:
+            self.logger.warning(f"algo API Exception: {e}")
             return False
 
 
