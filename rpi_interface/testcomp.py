@@ -303,9 +303,7 @@ def test_camera_snap():
             NUM_OBSTACLES = 3  # or whatever constant you want to send
             with open(img_name, "rb") as f:
                 response = requests.post(
-                    url,
-                    files={"file": f},
-                    data={"num_obstacles": NUM_OBSTACLES}
+                    url, files={"file": f}, data={"num_obstacles": NUM_OBSTACLES}
                 )
             logger.debug(f"Upload response: {response.status_code}")
 
