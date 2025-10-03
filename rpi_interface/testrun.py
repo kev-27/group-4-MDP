@@ -530,7 +530,7 @@ class RaspberryPi:
             self.logger.info(
                 f"Obstacle {results['obstacle_id']} successfully recognized."
             )
-            res = f"obstacleID: {int(results['obstacle_id'])}, imageID: {int(results["image_id"])}"
+            res = f"obstacleID: {int(results['obstacle_id'])}, imageID: {int(results['image_id'])}"
             self.android_queue.put(AndroidMessage("target", res))
 
         # Log results

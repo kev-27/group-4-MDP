@@ -281,7 +281,7 @@ def test_camera_snap():
     check_api()
 
     img_cnt = 1
-    url = f"http://{IMG_API_IP}:{IMG_API_PORT}/upload"
+    url = f"http://{IMG_API_IP}:{IMG_API_PORT}/image"
 
     try:
         while True:
@@ -290,7 +290,6 @@ def test_camera_snap():
             img_name = f"img_{img_cnt}.jpg"
             logger.debug("Capturing photo with rpi...")
             with PiCamera() as camera:
-                camera.rotation = 180
                 camera.resolution = (800, 800)
                 camera.start_preview()
                 time.sleep(0.5)
@@ -300,10 +299,10 @@ def test_camera_snap():
             img_cnt += 1
 
             logger.debug("Uploading to API...")
-            NUM_OBSTACLES = 3  # or whatever constant you want to send
+            NUM_OBSTACLES = 1  
             with open(img_name, "rb") as f:
                 response = requests.post(
-                    url, files={"file": f}, data={"num_obstacles": NUM_OBSTACLES}
+                    url, files={"file": f}, data={"NUM_OBSTACLES": NUM_OBSTACLES}
                 )
             logger.debug(f"Upload response: {response.status_code}")
 
@@ -489,7 +488,6 @@ def test_A5():
             rpi.logger.debug("Capturing photo with rpi...")
             with PiCamera() as camera:
                 camera.resolution = (800, 800)
-                camera.rotation = 180
                 camera.start_preview()
                 time.sleep(1)
                 camera.capture(img_name)
