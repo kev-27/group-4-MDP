@@ -61,10 +61,10 @@ def path_finding():
             continue
         if command.startswith("FIN"):
             continue
-        elif command.startswith("FW") or command.startswith("FS"):
-            i += int(command[2:]) // 10
-        elif command.startswith("BW") or command.startswith("BS"):
-            i += int(command[2:]) // 10
+        elif command.startswith("W") or command.startswith("FS"):
+            i += int(command[1:]) // 100
+        elif (command.startswith("S") and command[1].isdigit() )or command.startswith("BS"):
+            i += int(command[1:]) // 100
         else:
             i += 1
         path_results.append(optimal_path[i].get_dict())

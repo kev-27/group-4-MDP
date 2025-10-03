@@ -263,7 +263,9 @@ def command_generator(states, obstacles):
     for i in range(1, len(commands)):
         # If both commands are BW
         #if commands[i].startswith("BW") and compressed_commands[-1].startswith("BW"): OG COMMANDS
-        if commands[i].startswith("S") and compressed_commands[-1].startswith("S"):
+        if commands[i].startswith("S") and commands[i][1].isdigit() \
+            and compressed_commands[-1].startswith("S") and compressed_commands[-1][1].isdigit():
+
             # Get the number of steps of previous command
             #steps = int(compressed_commands[-1][2:]) OG LINE
             steps = int(compressed_commands[-1][1:])
@@ -271,7 +273,7 @@ def command_generator(states, obstacles):
             #if steps != 90: OG LINE
             if steps != 900:
                 #compressed_commands[-1] = "BW{}".format(steps + 10)
-                compressed_commands[-1] = "S{}".format(steps+100)
+                compressed_commands[-1] = "S0{}".format(steps+100)
                 continue
 
         # If both commands are FW
@@ -281,7 +283,7 @@ def command_generator(states, obstacles):
             steps = int(compressed_commands[-1][1:])
             # If steps are not 90, add 10 to the steps
             if steps != 900:
-                compressed_commands[-1] = "W{}".format(steps + 100)
+                compressed_commands[-1] = "W0{}".format(steps + 100)
                 continue
         
         # Otherwise, just add as usual
