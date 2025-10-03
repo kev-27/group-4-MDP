@@ -513,7 +513,9 @@ class RaspberryPi:
         # Send to API
         try:
             with open(filename, "rb") as f:
-                response = requests.post(url, files={"file": (filename, f)})
+                response = requests.post(
+                    url, files={"file": f}, data={"NUM_OBSTACLES": NUM_OBSTACLES} # this is the obstalce ID, bad naming
+                )
             results = json.loads(response.content)
         except Exception as e:
             self.logger.error(f"Error calling image-rec API: {e}")
