@@ -21,30 +21,48 @@ from settings import (
 from testrun import RaspberryPi
 
 
-def check_api() -> bool:
+def check_api(self) -> bool:
     """Check whether image recognition and algorithm API server is up and running
 
     Returns:
-        bool: True if running, False if not.
+        bool: True if both are running, False otherwise.
     """
     # Check image recognition API
-    url = f"http://{API_IP}:{API_PORT}/status"
+    image_ok = False
+    image_url = f"http://{IMG_API_IP}:{IMG_API_PORT}/status"
     try:
-        response = requests.get(url, timeout=1)
+        response = requests.get(image_url, timeout=1)
         if response.status_code == 200:
-            logger.debug("API is up!")
-            return True
-        return False
-    # If error, then log, and return False
-    except ConnectionError:
-        logger.warning("API Connection Error")
-        return False
+            self.logger.debug("Image API is up!")
+            image_ok = True
+        else:
+            self.logger.warning("Image API returned non-200 status.")
+    except requests.ConnectionError:
+        self.logger.warning("Image recognition API Connection Error")
     except requests.Timeout:
-        logger.warning("API Timeout")
-        return False
+        self.logger.warning("Image recognition API Timeout")
     except Exception as e:
-        logger.warning(f"API Exception: {e}")
-        return False
+        self.logger.warning(f"Image API Exception: {e}")
+
+    # Check algorithm API
+    algo_ok = False
+    algo_url = f"http://{ALGO_API_IP}:{ALGO_API_PORT}/status"
+    try:
+        response = requests.get(algo_url, timeout=1)
+        if response.status_code == 200:
+            self.logger.debug("Algorithm API is up!")
+            algo_ok = True
+        else:
+            self.logger.warning("Algorithm API returned non-200 status.")
+    except requests.ConnectionError:
+        self.logger.warning("Algorithm API Connection Error")
+    except requests.Timeout:
+        self.logger.warning("Algorithm API Timeout")
+    except Exception as e:
+        self.logger.warning(f"Algorithm API Exception: {e}")
+
+    # Only return True if both are OK
+    return image_ok and algo_ok
 
 
 def test_android_comm_only():
