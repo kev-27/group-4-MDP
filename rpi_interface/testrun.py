@@ -539,12 +539,12 @@ class RaspberryPi:
 
         # Handle "NA" or successful recognition
         if results["predicted_id"] == "-1":
-            self.failed_obstacles.append(self.obstacles[int(results["num_obstacles"])])
+            self.failed_obstacles.append(self.obstacles[results["num_obstacles"]])
             self.logger.info(
                 f"Added Obstacle {results['num_obstacles']} to failed obstacles."
             )
         else:
-            obstacle_id = int(obstacle_id_with_signal.split('_')[0])
+            obstacle_id = obstacle_id_with_signal.split('_')[0]
             self.success_obstacles.append(self.obstacles[obstacle_id])
 
             self.logger.info(
