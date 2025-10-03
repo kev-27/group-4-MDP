@@ -8,6 +8,8 @@ from logger.logger import logger
 from communication.android import AndroidMessage
 from communication.stm32 import STMLink
 import serial
+from multiprocessing import Process
+
 from settings import (
     IMG_API_IP,
     IMG_API_PORT,
@@ -293,7 +295,7 @@ def test_camera_snap():
             img_cnt += 1
 
             logger.debug("Uploading to API...")
-            NUM_OBSTACLES = 1  
+            NUM_OBSTACLES = 1
             with open(img_name, "rb") as f:
                 response = requests.post(
                     url, files={"file": f}, data={"NUM_OBSTACLES": NUM_OBSTACLES}
@@ -427,7 +429,7 @@ def test_A4():
         "D0360",
         "D0090",
         "SEX",
-        "PORN"
+        "PORN",
     ]
 
     rpi = RaspberryPi()
@@ -453,7 +455,9 @@ def test_A4():
 
                 rpi.logger.debug("sending")
                 rpi.stm_link.send(cmd[num])
+                rpi.recv_stm()
                 rpi.logger.debug("sent")
+                rpi.logger.debug("waiting for reply") 
 
     except KeyboardInterrupt:
         rpi.logger.info("Keyboard interrupt received, shutting down.")
@@ -534,131 +538,93 @@ def test_A5():
 
 
 def test_integration():
-    """Integration Test: STM32 + Algo API + Image Recognition (no Android)"""
-    import time
-    import json
-    import requests
-    from picamera import PiCamera
-    from communication.stm32 import STMLink
-    from logger.logger import logger
-    from consts import IMG_API_IP, IMG_API_PORT, ALGO_API_IP, ALGO_API_PORT
+    """
+    Integration test using the real RaspberryPi.command_follower and rpi_action logic.
+    On KeyboardInterrupt or end, cleans up gracefully.
+    """
+    # Instantiate your RPi wrapper
+    rpi = RaspberryPi()
 
+    # Connect STM (or mock, but here assume real link)
+    try:
+        rpi.stm_link.connect()
+        logger.info("STM32 connected")
+    except Exception as e:
+        logger.error("Failed to connect STM32: %s", e)
+        return
+
+    # Ensure APIs are up
     def check_api():
-        """Check if both APIs are alive"""
         try:
             img_ok = requests.get(f"http://{IMG_API_IP}:{IMG_API_PORT}/status", timeout=1).status_code == 200
             algo_ok = requests.get(f"http://{ALGO_API_IP}:{ALGO_API_PORT}/status", timeout=1).status_code == 200
             return img_ok and algo_ok
         except Exception as e:
-            logger.error(f"API check failed: {e}")
+            logger.error("API check failed: %s", e)
             return False
 
-    def snap_and_recognize(obstacle):
-        """Capture image and send to image recognition API"""
-        filename = f"test_{obstacle['id']}.jpg"
-        url = f"http://{IMG_API_IP}:{IMG_API_PORT}/image"
-
-        try:
-            with PiCamera() as camera:
-                camera.resolution = (800, 800)
-                camera.start_preview()
-                time.sleep(0.5)
-                camera.capture(filename)
-                logger.info(f"Image captured: {filename}")
-        except Exception as e:
-            logger.error(f"Camera error: {e}")
-            return
-
-        try:
-            with open(filename, "rb") as f:
-                response = requests.post(
-                    url,
-                    files={"file": f},
-                    data={"NUM_OBSTACLES": obstacle["id"]}  # misnamed, but used as obstacle ID
-                )
-            if response.status_code != 200:
-                logger.error(f"Image API error: {response.status_code}")
-                return
-
-            results = response.json()
-            logger.info(f"Image recognition results: {json.dumps(results, indent=2)}")
-        except Exception as e:
-            logger.error(f"Image API call failed: {e}")
-
-    logger.info("=== Integration Test Started ===")
-
     if not check_api():
-        logger.error("API check failed. Ensure Algo and Image API servers are running.")
+        logger.error("APIs not up. Aborting test.")
+        rpi.stm_link.disconnect()
         return
 
-    # Connect to STM32
-    stm = STMLink()
-    try:
-        stm.connect()
-        logger.info("STM32 connected.")
-    except Exception as e:
-        logger.error(f"Failed to connect to STM32: {e}")
-        return
-
-    # Define test obstacles
-    obstacles = [
-        {"x": 5, "y": 8, "id": 1, "d": 6},
-        {"x": 8, "y": 12, "id": 2, "d": 4},
-    ]
-    obstacle_map = {obs["id"]: obs for obs in obstacles}
-
-    # Request path from Algo API
-    body = {
-        "obstacles": obstacles,
-        "big_turn": "0",
-        "robot_x": 1,
-        "robot_y": 1,
-        "robot_dir": 0,
-        "retrying": False,
+    # Prepare test obstacle data
+    TEST_OBS = {
+        "obstacles": [
+            {"x": 10, "y": 4, "id": 1, "d": 6},
+            {"x": 7, "y": 16, "id": 2, "d": 4},
+        ]
     }
 
+    # In one thread/process: issue the algorithm request to populate commands
+    def issue_algo_request():
+        rpi.request_algo(TEST_OBS, robot_x=1, robot_y=1, robot_dir=0, retrying=False)
+
+    # Run the follower and action workers
+    proc_follower = Process(target=rpi.command_follower)
+    proc_action = Process(target=rpi.rpi_action)
+
     try:
-        algo_url = f"http://{ALGO_API_IP}:{ALGO_API_PORT}/path"
-        response = requests.post(algo_url, json=body)
-        if response.status_code != 200:
-            logger.error(f"Algo API returned {response.status_code}")
-            logger.error(f"Algo response: {response.text}")
-            return
+        # Kick off
+        proc_follower.start()
+        proc_action.start()
 
-        result = response.json()["data"]
-        commands = result["commands"]
-        path = result["path"]
+        # Issue the algorithm request (this populates rpi.command_queue)
+        issue_algo_request()
 
-        logger.info(f"Commands: {commands}")
-        logger.info(f"Path: {path}")
+        # Wait until finishing or interrupt
+        while True:
+            # If follower or action died unexpectedly, break
+            if not proc_follower.is_alive() or not proc_action.is_alive():
+                logger.warning("One of the worker processes exited prematurely.")
+                break
+            time.sleep(0.5)
+
+    except KeyboardInterrupt:
+        logger.info("KeyboardInterrupt in test, shutting down.")
     except Exception as e:
-        logger.error(f"Algo API call failed: {e}")
-        return
-
-    # Execute commands
-    for command in commands:
-        if command.startswith("SNAP"):
+        logger.error("Unexpected error in test: %s", e)
+    finally:
+        # Clean up / terminate child processes
+        for p in (proc_follower, proc_action):
             try:
-                obs_id = int(command.replace("SNAP", ""))
-                logger.info(f"Taking snapshot for obstacle ID {obs_id}")
-                snap_and_recognize(obstacle_map[obs_id])
+                if p.is_alive():
+                    p.terminate()
+                p.join(timeout=1)
             except Exception as e:
-                logger.error(f"Failed to handle SNAP command: {e}")
-        else:
-            logger.info(f"Sending command to STM32: {command}")
-            stm.send(command)
-            # Wait for STM32 to reply with DONEz
-            while True:
-                try:
-                    msg = stm.recv()
-                    logger.info(f"STM32 says: {msg}")
-                    if msg.startswith("DONEz"):
-                        break
-                except Exception as e:
-                    logger.error(f"STM recv error: {e}")
-                    break
+                logger.warning("Error terminating process %s: %s", p, e)
 
-    logger.info("=== Integration Test Completed ===")
+        # Disconnect STM
+        try:
+            rpi.stm_link.disconnect()
+        except Exception as e:
+            logger.warning("Error disconnecting STM: %s", e)
+
+        logger.info("Test integration done.")
+
+if __name__ == "__main__":
+    test_integration()
+
 
 if __name__ == "__main__":
     if "--test-android" in sys.argv:

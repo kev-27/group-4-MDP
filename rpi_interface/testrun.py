@@ -285,12 +285,14 @@ class RaspberryPi:
                         self.logger.warning(
                             "The command queue is empty, please set obstacles."
                         )
-                        self.android_queue.put(
+                    """
+                       self.android_queue.put(
                             AndroidMessage(
                                 "error",
                                 "Command queue is empty, did you set obstacles?",
                             )
                         )
+                    """
 
     def recv_stm(self) -> None:
         """
@@ -300,7 +302,7 @@ class RaspberryPi:
         """
         while True:
             message: str = self.stm_link.recv()
-
+            self.logger.debug(f"Received {message}")
             if message.startswith("DONEz"):
                 if self.rs_flag == False:
                     self.rs_flag = True
@@ -322,6 +324,8 @@ class RaspberryPi:
                     self.current_location["y"] = cur_location["y"]
                     self.current_location["d"] = cur_location["d"]
                     self.logger.info(f"self.current_location = {self.current_location}")
+
+                    """
                     self.android_queue.put(
                         AndroidMessage(
                             "location",
@@ -332,6 +336,7 @@ class RaspberryPi:
                             },
                         )
                     )
+                  """
 
                 except Exception:
                     self.logger.warning("Tried to release a released lock!")
@@ -404,10 +409,14 @@ class RaspberryPi:
                 "ZZ",
                 "RS",
                 # following is for demo
-                "F",
-                "B",
-                "L",
-                "R",
+                "W",
+                "A",
+                "S",
+                "D",
+                "Z",
+                "Q",
+                "E",
+                "X",
                 "P",
             )
             if command.startswith(stm32_prefixes):
@@ -495,9 +504,12 @@ class RaspberryPi:
 
         obstacle_id, signal = obstacle_id_with_signal.split("_")
         self.logger.info(f"Capturing image for obstacle id: {obstacle_id}")
+
+        """
         self.android_queue.put(
             AndroidMessage("info", f"Capturing image for obstacle id: {obstacle_id}")
         )
+        """
 
         filename = f"{int(time.time())}_{obstacle_id}_{signal}.jpg"
         url = f"http://{IMG_API_IP}:{IMG_API_PORT}/image"
@@ -514,7 +526,11 @@ class RaspberryPi:
         try:
             with open(filename, "rb") as f:
                 response = requests.post(
-                    url, files={"file": f}, data={"NUM_OBSTACLES": int(obstacle_id)} # this is the obstalce ID, bad naming
+                    url,
+                    files={"file": f},
+                    data={
+                        "NUM_OBSTACLES": int(obstacle_id)
+                    },  # this is the obstalce ID, bad naming
                 )
             results = json.loads(response.content)
         except Exception as e:
@@ -533,11 +549,11 @@ class RaspberryPi:
                 f"Obstacle {results['obstacle_id']} successfully recognized."
             )
             res = f"obstacleID: {int(results['obstacle_id'])}, imageID: {int(results['image_id'])}"
-            self.android_queue.put(AndroidMessage("target", res))
+        # self.android_queue.put(AndroidMessage("target", res))
 
         # Log results
         self.logger.info(f"Image recognition results: {results}")
-        self.android_queue.put(AndroidMessage("image-rec", results))
+        # self.android_queue.put(AndroidMessage("image-rec", results))
 
     def request_algo(self, data, robot_x=1, robot_y=1, robot_dir=0, retrying=False):
         """
