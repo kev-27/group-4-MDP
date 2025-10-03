@@ -450,17 +450,6 @@ def test_A5():
         image_id = -1
 
         while image_id == -1:
-
-            # === Wait for STM32 DONEz before doing anything ===
-            rpi.logger.debug("Waiting for STM32 DONEz...")
-            ack = None
-            while ack != "DONEz":
-                ack = rpi.stm_link.recv()
-                if ack is None:
-                    rpi.logger.warning("No ACK received yet...")
-                else:
-                    rpi.logger.debug(f"Received from STM32: {ack}")
-
             # === Capture photo ===
             img_name = f"img_{img_cnt}.jpg"
             rpi.logger.debug("Capturing photo with rpi...")
@@ -483,7 +472,7 @@ def test_A5():
             if response.ok:
                 try:
                     data = response.json()
-                    image_id = data.get("image_id", -1)
+                    image_id = int(data.get("image_id", -1))
                     rpi.logger.info(f"Parsed image_id: {image_id}")
                 except Exception as e:
                     rpi.logger.error(f"Failed to parse JSON: {e}")
@@ -499,6 +488,17 @@ def test_A5():
                 rpi.logger.debug("Sending stop command to STM32...")
                 rpi.stm_link.send("P6969")
                 rpi.logger.debug("Command sent, waiting for next DONEz")
+
+            # === Wait for STM32 DONEz before doing anything ===
+    #            rpi.logger.debug("Waiting for STM32 DONEz...")
+    #            ack = None
+    #            while ack != "DONEz":
+    #                ack = rpi.stm_link.recv()
+    #                if ack is None:
+    #                    rpi.logger.warning("No ACK received yet...")
+    #                else:
+    #                    rpi.logger.debug(f"Received from STM32: {ack}")
+    #
 
     except KeyboardInterrupt:
         rpi.logger.info("Keyboard interrupt received, shutting down.")
