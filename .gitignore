@@ -761,3 +761,10 @@ captures/
 .DS_Store
 Thumbs.db
 *.stackdump
+
+
+# images
+
+*.jpg
+*.png
+*.jpeg
