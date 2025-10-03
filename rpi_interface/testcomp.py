@@ -433,6 +433,7 @@ def test_A4():
         "D0360",
         "D0090",
         "SEX",
+        "PORN"
     ]
 
     rpi = RaspberryPi()
