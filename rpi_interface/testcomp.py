@@ -455,7 +455,7 @@ def test_A4():
 
                 rpi.logger.debug("sending")
                 rpi.stm_link.send(cmd[num])
-                rpi.recv_stm()
+                # rpi.recv_stm()
                 rpi.logger.debug("sent")
                 rpi.logger.debug("waiting for reply") 
 

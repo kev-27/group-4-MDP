@@ -271,7 +271,7 @@ class RaspberryPi:
                     # Commencing path following
                     if not self.command_queue.empty():
                         self.logger.info("Gryo reset!")
-                        self.stm_link.send("RS00")
+                        # self.stm_link.send("RS00")
                         # Main trigger to start movement #
                         self.unpause.set()
                         self.logger.info(
@@ -303,7 +303,7 @@ class RaspberryPi:
         while True:
             message: str = self.stm_link.recv()
             self.logger.debug(f"Received {message}")
-            if message.startswith("DONEz"):
+            if message.startswith("DONE"):
                 if self.rs_flag == False:
                     self.rs_flag = True
                     self.logger.debug("ACK for RS00 from STM32 received.")
