@@ -305,9 +305,9 @@ class RaspberryPi:
             self.logger.debug(f"Received {message}")
             if message.startswith("DONE"):
                 # if self.rs_flag == False:
-                    # self.rs_flag = True
+                # self.rs_flag = True
                 self.logger.debug("ACK for RS00 from STM32 received.")
-                    # continue
+                # continue
                 try:
                     self.movement_lock.release()
                     try:
@@ -544,7 +544,7 @@ class RaspberryPi:
                 f"Added Obstacle {results['num_obstacles']} to failed obstacles."
             )
         else:
-            obstacle_id = obstacle_id_with_signal.split('_')[0]
+            obstacle_id = obstacle_id_with_signal.split("_")[0]
             self.success_obstacles.append(int(self.obstacles[obstacle_id]))
 
             self.logger.info(

@@ -1,8 +1,11 @@
 import json
 import os
 import socket
-from typing import Optional
+import signal
+import sys
+import atexit
 import bluetooth
+from typing import Optional
 from communication.link import Link
 
 
@@ -38,8 +41,17 @@ class AndroidLink(Link):
         super().__init__()
         self.client_sock: Optional[bluetooth.BluetoothSocket] = None
         self.server_sock: Optional[bluetooth.BluetoothSocket] = None
-        # Use your custom UUID, but still advertise as SPP
         self.uuid = "b2a5ef6a-ec41-45b5-8aae-0f9ff16c09ce"
+
+        # Ensure sockets are cleaned up on program exit or interruption
+        atexit.register(self.disconnect)
+        signal.signal(signal.SIGINT, self._signal_handler)
+        signal.signal(signal.SIGTERM, self._signal_handler)
+
+    def _signal_handler(self, sig, frame):
+        self.logger.info(f"Signal {sig} received. Cleaning up Bluetooth sockets.")
+        self.disconnect()
+        sys.exit(0)
 
     def connect(self):
         """
@@ -50,12 +62,7 @@ class AndroidLink(Link):
         self.logger.info("Bluetooth connection starting...")
 
         try:
-            # Clean up any leftover RFCOMM bindings
-            self.logger.debug("Releasing stale RFCOMM bindings...")
-            os.system("sudo rfcomm release all")
-
             # Make Pi discoverable
-            self.logger.debug("Setting Pi to be discoverable...")
             os.system("sudo hciconfig hci0 piscan")
 
             # Create server socket
@@ -89,7 +96,6 @@ class AndroidLink(Link):
         """
         Disconnect from Android and close all sockets cleanly.
         """
-        self.logger.debug("Disconnecting Bluetooth link...")
         try:
             if self.client_sock:
                 self.client_sock.close()

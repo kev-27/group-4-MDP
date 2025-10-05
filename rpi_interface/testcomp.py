@@ -22,6 +22,7 @@ from settings import (
 # Import RaspberryPi ONLY for the test cases that need it
 from testrun import RaspberryPi, PiAction
 
+
 def check_api() -> bool:
     """Check whether image recognition and algorithm API server is up and running
 
@@ -457,7 +458,7 @@ def test_A4():
                 rpi.logger.debug("sending")
                 rpi.stm_link.send(cmd[num])
                 rpi.logger.debug("sent")
-                rpi.logger.debug("waiting for reply") 
+                rpi.logger.debug("waiting for reply")
                 # rpi.recv_stm()
 
     except KeyboardInterrupt:
@@ -560,8 +561,18 @@ def test_integration():
     # Check API health
     def check_api():
         try:
-            img_ok = requests.get(f"http://{IMG_API_IP}:{IMG_API_PORT}/status", timeout=1).status_code == 200
-            algo_ok = requests.get(f"http://{ALGO_API_IP}:{ALGO_API_PORT}/status", timeout=1).status_code == 200
+            img_ok = (
+                requests.get(
+                    f"http://{IMG_API_IP}:{IMG_API_PORT}/status", timeout=1
+                ).status_code
+                == 200
+            )
+            algo_ok = (
+                requests.get(
+                    f"http://{ALGO_API_IP}:{ALGO_API_PORT}/status", timeout=1
+                ).status_code
+                == 200
+            )
             return img_ok and algo_ok
         except Exception as e:
             logger.error("API check failed: %s", e)
@@ -637,6 +648,7 @@ def test_integration():
             logger.warning(f"Failed to disconnect STM32: {e}")
 
         logger.info("Test complete.")
+
 
 if __name__ == "__main__":
     test_integration()
