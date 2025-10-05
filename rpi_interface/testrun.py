@@ -305,9 +305,9 @@ class RaspberryPi:
             self.logger.debug(f"Received {message}")
             if message.startswith("DONE"):
                 # if self.rs_flag == False:
-                # self.rs_flag = True
+                    # self.rs_flag = True
                 self.logger.debug("ACK for RS00 from STM32 received.")
-                # continue
+                    # continue
                 try:
                     self.movement_lock.release()
                     try:
@@ -502,7 +502,8 @@ class RaspberryPi:
         :param obstacle_id_with_signal: the current obstacle ID followed by underscore followed by signal
         """
 
-        obstacle_id, signal = obstacle_id_with_signal.split("_")
+        obstacle_id_str, signal = obstacle_id_with_signal.split("_")
+        obstacle_id = int(obstacle_id_str)  # cast once here for all usage
         self.logger.info(f"Capturing image for obstacle id: {obstacle_id}")
 
         """
@@ -529,33 +530,46 @@ class RaspberryPi:
                     url,
                     files={"file": f},
                     data={
-                        "NUM_OBSTACLES": int(obstacle_id)
-                    },  # this is the obstalce ID, bad naming
+                        "NUM_OBSTACLES": obstacle_id  # passing int here
+                    },
                 )
             results = json.loads(response.content)
         except Exception as e:
             self.logger.error(f"Error calling image-rec API: {e}")
             return
 
-        # Handle "NA" or successful recognition
-        if results["predicted_id"] == "-1":
-            self.failed_obstacles.append(int(self.obstacles[results["num_obstacles"]]))
-            self.logger.info(
-                f"Added Obstacle {results['num_obstacles']} to failed obstacles."
-            )
-        else:
-            obstacle_id = obstacle_id_with_signal.split("_")[0]
-            self.success_obstacles.append(int(self.obstacles[obstacle_id]))
+        # Handle response keys safely
+        # Convert keys to int to access obstacles dictionary
+        try:
+            result_num_obs = int(results["num_obstacles"])
+            predicted_id = results.get("predicted_id", "-1")
+        except (KeyError, ValueError) as e:
+            self.logger.error(f"Malformed response from API: {results} - {e}")
+            return
 
-            self.logger.info(
-                f"Obstacle {results['num_obstacles']} successfully recognized."
-            )
-            res = f"obstacleID: {int(results['num_obstacles'])}, imageID: {int(results['predicted_id'])}"
-        # self.android_queue.put(AndroidMessage("target", res))
+        # Handle recognition result
+        if predicted_id == "-1":
+            # Failed recognition: append obstacle dict to failed list
+            if result_num_obs in self.obstacles:
+                self.failed_obstacles.append(self.obstacles[result_num_obs])
+                self.logger.info(f"Added Obstacle {result_num_obs} to failed obstacles.")
+            else:
+                self.logger.warning(f"Obstacle {result_num_obs} not found in obstacles dict.")
+        else:
+            # Successful recognition: append obstacle dict to success list
+            if obstacle_id in self.obstacles:
+                self.success_obstacles.append(self.obstacles[obstacle_id])
+                self.logger.info(f"Obstacle {result_num_obs} successfully recognized.")
+                res = f"obstacleID: {result_num_obs}, imageID: {int(predicted_id)}"
+                # self.android_queue.put(AndroidMessage("target", res))
+            else:
+                self.logger.warning(f"Obstacle {obstacle_id} not found in obstacles dict.")
 
         # Log results
         self.logger.info(f"Image recognition results: {results}")
+        self.stm_link.send("R0000")
         # self.android_queue.put(AndroidMessage("image-rec", results))
+
 
     def request_algo(self, data, robot_x=1, robot_y=1, robot_dir=0, retrying=False):
         """
