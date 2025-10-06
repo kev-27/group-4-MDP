@@ -287,17 +287,6 @@ class RaspberryPi:
             if message.startswith("DONE"):
                 self.logger.debug("Acknowledgement 'DONE' from STM32 received.")
 
-                # If there is no pending path entry, do not release the movement lock.
-                # This avoids double-release when STM emits extra DONE messages
-                # (e.g. for R0000 or other internal signals).
-                try:
-                    cur_location = self.path_queue.get_nowait()
-                except queue.Empty:
-                    # No movement was pending to complete — ignore this DONE.
-                    self.logger.debug("Received DONE but no pending path entry; ignoring.")
-                    continue
-
-                # There was a pending movement: now it's safe to release locks and update location.
                 try:
                     # Release the movement lock (only once per actual movement completion).
                     try:
