@@ -274,74 +274,75 @@ class RaspberryPi:
 
 
 
-def recv_stm(self) -> None:
-    """
-    [Child Process] Receive acknowledgement messages from STM32, and release the movement lock
-    """
-    while True:
-        message: str = self.stm_link.recv()
-        self.logger.debug(f"Received {message}")
-        if not message:
-            continue
-
-        if message.startswith("DONE"):
-            self.logger.debug("Acknowledgement 'DONE' from STM32 received.")
-
-            # If there is no pending path entry, do not release the movement lock.
-            # This avoids double-release when STM emits extra DONE messages
-            # (e.g. for R0000 or other internal signals).
-            try:
-                cur_location = self.path_queue.get_nowait()
-            except queue.Empty:
-                # No movement was pending to complete — ignore this DONE.
-                self.logger.debug("Received DONE but no pending path entry; ignoring.")
+    def recv_stm(self) -> None:
+        """
+        [Child Process] Receive acknowledgement messages from STM32, and release the movement lock
+        """
+        while True:
+            message: str = self.stm_link.recv()
+            self.logger.debug(f"Received {message}")
+            if not message:
                 continue
 
-            # There was a pending movement: now it's safe to release locks and update location.
-            try:
-                # Release the movement lock (only once per actual movement completion).
+            if message.startswith("DONE"):
+                self.logger.debug("Acknowledgement 'DONE' from STM32 received.")
+
+                # If there is no pending path entry, do not release the movement lock.
+                # This avoids double-release when STM emits extra DONE messages
+                # (e.g. for R0000 or other internal signals).
                 try:
-                    self.movement_lock.release()
-                except Exception as e:
-                    # This is unexpected if movement_lock was acquired before sending command;
-                    # log it for debugging but continue updating state.
-                    self.logger.warning(f"Failed to release movement_lock: {e}")
+                    cur_location = self.path_queue.get_nowait()
+                except queue.Empty:
+                    # No movement was pending to complete — ignore this DONE.
+                    self.logger.debug("Received DONE but no pending path entry; ignoring.")
+                    continue
 
-                # Release retrylock if it exists and is locked.
-                if hasattr(self, "retrylock"):
+                # There was a pending movement: now it's safe to release locks and update location.
+                try:
+                    # Release the movement lock (only once per actual movement completion).
                     try:
-                        self.retrylock.release()
-                    except Exception:
-                        # may not be acquired — that's OK
-                        pass
+                        self.movement_lock.release()
+                    except Exception as e:
+                        # This is unexpected if movement_lock was acquired before sending command;
+                        # log it for debugging but continue updating state.
+                        self.logger.warning(f"Failed to release movement_lock: {e}")
 
-                self.logger.debug("ACK from STM32 received, movement lock released.")
-            except Exception as e:
-                # Defensive: catch and log unexpected errors
-                self.logger.exception(f"Unexpected error while handling DONE: {e}")
+                    # Release retrylock if it exists and is locked.
+                    if hasattr(self, "retrylock"):
+                        try:
+                            self.retrylock.release()
+                        except Exception:
+                            # may not be acquired — that's OK
+                            pass
 
-            # Update and report the robot location based on path entry consumed
-            try:
-                self.current_location["x"] = cur_location["x"]
-                self.current_location["y"] = cur_location["y"]
-                self.current_location["d"] = cur_location["d"]
-                self.logger.info(f"self.current_location = {self.current_location}")
+                    self.logger.debug("ACK from STM32 received, movement lock released.")
+                except Exception as e:
+                    # Defensive: catch and log unexpected errors
+                    self.logger.exception(f"Unexpected error while handling DONE: {e}")
 
-                self.android_queue.put(
-                    AndroidMessage(
-                        "location",
-                        {
-                            "x": cur_location["x"],
-                            "y": cur_location["y"],
-                            "d": cur_location["d"],
-                        },
+                # Update and report the robot location based on path entry consumed
+                try:
+                    self.current_location["x"] = cur_location["x"]
+                    self.current_location["y"] = cur_location["y"]
+                    self.current_location["d"] = cur_location["d"]
+                    self.logger.info(f"self.current_location = {self.current_location}")
+
+                    self.android_queue.put(
+                        AndroidMessage(
+                            "location",
+                            {
+                                "x": cur_location["x"],
+                                "y": cur_location["y"],
+                                "d": cur_location["d"],
+                            },
+                        )
                     )
-                )
-            except Exception as e:
-                self.logger.exception(f"Failed to update/report current_location: {e}")
+                except Exception as e:
+                    self.logger.exception(f"Failed to update/report current_location: {e}")
 
-        else:
-            self.logger.warning(f"Ignored unknown message from STM: {message}")
+            else:
+                self.logger.warning(f"Ignored unknown message from STM: {message}")
+
     def android_sender(self) -> None:
         """
         [Child process] Responsible for retrieving messages from android_queue and sending them over the Android link.
