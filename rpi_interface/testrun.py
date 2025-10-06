@@ -273,51 +273,75 @@ class RaspberryPi:
                         )
 
 
-    def recv_stm(self) -> None:
-        """
-        [Child Process] Receive acknowledgement messages from STM32, and release the movement lock
-        """
-        while True:
-            message: str = self.stm_link.recv()
-            self.logger.debug(f"Received {message}")
-            if message.startswith("DONE"):
-                # if self.rs_flag == False:
-                # self.rs_flag = True
-                self.logger.debug("Acknowledgement 'DONE' from STM32 received.")
-                # continue
+
+def recv_stm(self) -> None:
+    """
+    [Child Process] Receive acknowledgement messages from STM32, and release the movement lock
+    """
+    while True:
+        message: str = self.stm_link.recv()
+        self.logger.debug(f"Received {message}")
+        if not message:
+            continue
+
+        if message.startswith("DONE"):
+            self.logger.debug("Acknowledgement 'DONE' from STM32 received.")
+
+            # If there is no pending path entry, do not release the movement lock.
+            # This avoids double-release when STM emits extra DONE messages
+            # (e.g. for R0000 or other internal signals).
+            try:
+                cur_location = self.path_queue.get_nowait()
+            except queue.Empty:
+                # No movement was pending to complete — ignore this DONE.
+                self.logger.debug("Received DONE but no pending path entry; ignoring.")
+                continue
+
+            # There was a pending movement: now it's safe to release locks and update location.
+            try:
+                # Release the movement lock (only once per actual movement completion).
                 try:
                     self.movement_lock.release()
+                except Exception as e:
+                    # This is unexpected if movement_lock was acquired before sending command;
+                    # log it for debugging but continue updating state.
+                    self.logger.warning(f"Failed to release movement_lock: {e}")
+
+                # Release retrylock if it exists and is locked.
+                if hasattr(self, "retrylock"):
                     try:
                         self.retrylock.release()
-                    except:
+                    except Exception:
+                        # may not be acquired — that's OK
                         pass
-                    self.logger.debug(
-                        "ACK from STM32 received, movement lock released."
+
+                self.logger.debug("ACK from STM32 received, movement lock released.")
+            except Exception as e:
+                # Defensive: catch and log unexpected errors
+                self.logger.exception(f"Unexpected error while handling DONE: {e}")
+
+            # Update and report the robot location based on path entry consumed
+            try:
+                self.current_location["x"] = cur_location["x"]
+                self.current_location["y"] = cur_location["y"]
+                self.current_location["d"] = cur_location["d"]
+                self.logger.info(f"self.current_location = {self.current_location}")
+
+                self.android_queue.put(
+                    AndroidMessage(
+                        "location",
+                        {
+                            "x": cur_location["x"],
+                            "y": cur_location["y"],
+                            "d": cur_location["d"],
+                        },
                     )
+                )
+            except Exception as e:
+                self.logger.exception(f"Failed to update/report current_location: {e}")
 
-                    cur_location = self.path_queue.get_nowait()  # non-blocking
-
-                    self.current_location["x"] = cur_location["x"]
-                    self.current_location["y"] = cur_location["y"]
-                    self.current_location["d"] = cur_location["d"]
-                    self.logger.info(f"self.current_location = {self.current_location}")
-
-                    self.android_queue.put(
-                        AndroidMessage(
-                            "location",
-                            {
-                                "x": cur_location["x"],
-                                "y": cur_location["y"],
-                                "d": cur_location["d"],
-                            },
-                        )
-                    )
-
-                except Exception:
-                    self.logger.warning("Tried to release a released lock!")
-            else:
-                self.logger.warning(f"Ignored unknown message from STM: {message}")
-
+        else:
+            self.logger.warning(f"Ignored unknown message from STM: {message}")
     def android_sender(self) -> None:
         """
         [Child process] Responsible for retrieving messages from android_queue and sending them over the Android link.
@@ -430,7 +454,6 @@ class RaspberryPi:
                 )
                 self.android_queue.put(AndroidMessage("status", "finished"))
                 self.stm_link.send("P0000")
-                # self.rpi_action_queue.put(PiAction(cat="stitch", value=""))
             else:
                 raise Exception(f"Unknown command: {command}")
 
@@ -441,7 +464,6 @@ class RaspberryPi:
         Only three categories are accepted:
         - obstacles: position of obstacle
         - snap: taking still image
-        - stitch: compile images together
         """
         while True:
             action: PiAction = self.rpi_action_queue.get()
@@ -455,8 +477,6 @@ class RaspberryPi:
                 self.logger.info(f"Obstacles updated: now have {len(self.obstacles)} obstacles.")
             elif action.cat == "snap":
                 self.snap_and_rec(obstacle_id_with_signal=action.value)
-            # elif action.cat == "stitch":
-            # self.request_stitch()
 
     def snap_and_rec(self, obstacle_id_with_signal: str) -> None:
         """
@@ -587,27 +607,6 @@ class RaspberryPi:
             )
         )
         self.logger.info("Commands and path received Algo API. Robot is ready to move.")
-
-    #     def request_stitch(self):
-    #         """Sends a stitch request to the image recognition API to stitch the different images together"""
-    #         url = f"http://{IMG_API_IP}:{IMG_API_PORT}/stitch"
-    #         response = requests.get(url)
-    #
-    #         # If error, then log, and send error to Android
-    #         if response.status_code != 200:
-    #             # Notify android
-    #             self.android_queue.put(
-    #                 AndroidMessage(
-    #                     "error", "Something went wrong when requesting stitch from the API."
-    #                 )
-    #             )
-    #             self.logger.error(
-    #                 "Something went wrong when requesting stitch from the API."
-    #             )
-    #             return
-    #
-    #         self.logger.info("Images stitched!")
-    #         self.android_queue.put(AndroidMessage("info", "Images stitched!"))
 
     def clear_queues(self):
         """Clear both command and path queues"""
