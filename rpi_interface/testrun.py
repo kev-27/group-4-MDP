@@ -239,59 +239,39 @@ class RaspberryPi:
                 self.rpi_action_queue.put(PiAction(**message))
                 self.logger.debug(f"Set obstacles PiAction added to queue: {message}")
 
-            # elif message["cat"] == "manual":
-            # if not self.unpause.is_set():
-            # self.logger.info("Gryo reset!")
-            # self.stm_link.send("RS00")
-            # Main trigger to start movement #
-            # self.unpause.set()
-            # self.logger.info("Start command received, starting robot on path!")
-            # self.android_queue.put(AndroidMessage("status", "running"))
-
-            # cmd = message["value"]
-            # self.logger.info(f"Manual command received: {cmd}")
-            # self.command_queue.put(cmd)
-            # self.android_queue.put(AndroidMessage("info", f"Manual command enqueued: {cmd}"))
-
-            ## Command: Start Moving ##
             elif message["cat"] == "control":
                 if message["value"] == "start":
                     # Check API
                     if not self.check_api():
-                        self.logger.error(
-                            "Image / Algo API is down! Start command aborted."
-                        )
+                        self.logger.error("Image / Algo API is down! Start command aborted.")
                         self.android_queue.put(
-                            AndroidMessage(
-                                "error",
-                                "Image / Algo API is down, start command aborted.",
-                            )
+                            AndroidMessage("error", "Image / Algo API is down, start command aborted.")
                         )
+                        continue  # Stop further execution
 
-                    # Commencing path following
+                    # Ensure obstacles are set before starting
+                    if not self.obstacles:
+                        self.logger.warning("No obstacles set. Cannot start.")
+                        self.android_queue.put(AndroidMessage("error", "No obstacles set."))
+                        continue
+
+                    # === NEW CODE: Request path from algorithm ===
+                    data = {"obstacles": list(self.obstacles.values()), "mode": "0"}
+                    self.request_algo(data)
+                    # =============================================
+
+                    # Now, commence movement if commands exist
                     if not self.command_queue.empty():
-                        self.logger.info("Gryo reset!")
-                        # self.stm_link.send("RS00")
-                        # Main trigger to start movement #
                         self.unpause.set()
-                        self.logger.info(
-                            "Start command received, starting robot on path!"
-                        )
-                        self.android_queue.put(
-                            AndroidMessage("info", "Starting robot on path!")
-                        )
+                        self.logger.info("Start command received, starting robot on path!")
+                        self.android_queue.put(AndroidMessage("info", "Starting robot on path!"))
                         self.android_queue.put(AndroidMessage("status", "running"))
                     else:
-                        self.logger.warning(
-                            "The command queue is empty, please set obstacles."
+                        self.logger.warning("The command queue is empty, please set obstacles.")
+                        self.android_queue.put(
+                            AndroidMessage("error", "Command queue is empty, did you set obstacles?")
                         )
 
-                        self.android_queue.put(
-                            AndroidMessage(
-                                "error",
-                                "Command queue is empty, did you set obstacles?",
-                            )
-                        )
 
     def recv_stm(self) -> None:
         """
@@ -422,26 +402,26 @@ class RaspberryPi:
                     f"At FIN, self.current_location: {self.current_location}"
                 )
 
-                if len(self.failed_obstacles) != 0 and self.failed_attempt == False:
-                    new_obstacle_list = list(self.failed_obstacles)
-                    for i in list(self.success_obstacles):
-                        # {'x': 5, 'y': 11, 'id': 1, 'd': 4}
-                        i["d"] = 8
-                        new_obstacle_list.append(i)
-
-                    self.logger.info("Attempting to go to failed obstacles")
-                    self.failed_attempt = True
-                    self.request_algo(
-                        {"obstacles": new_obstacle_list, "mode": "0"},
-                        self.current_location["x"],
-                        self.current_location["y"],
-                        self.current_location["d"],
-                        retrying=True,
-                    )
-                    self.retrylock = self.manager.Lock()
-                    self.movement_lock.release()
-                    continue
-
+#                if len(self.failed_obstacles) != 0 and self.failed_attempt == False:
+#                    new_obstacle_list = list(self.failed_obstacles)
+#                    for i in list(self.success_obstacles):
+#                        # {'x': 5, 'y': 11, 'id': 1, 'd': 4}
+#                        i["d"] = 8
+#                        new_obstacle_list.append(i)
+#
+#                    self.logger.info("Attempting to go to failed obstacles")
+#                    self.failed_attempt = True
+#                    self.request_algo(
+#                        {"obstacles": new_obstacle_list, "mode": "0"},
+#                        self.current_location["x"],
+#                        self.current_location["y"],
+#                        self.current_location["d"],
+#                        retrying=True,
+#                    )
+#                    self.retrylock = self.manager.Lock()
+#                    self.movement_lock.release()
+#                    continue
+#
                 self.unpause.clear()
                 self.movement_lock.release()
                 self.logger.info("Commands queue finished.")
@@ -449,7 +429,7 @@ class RaspberryPi:
                     AndroidMessage("info", "Commands queue finished.")
                 )
                 self.android_queue.put(AndroidMessage("status", "finished"))
-                self.stm_link.send("R0000")
+                self.stm_link.send("P0000")
                 # self.rpi_action_queue.put(PiAction(cat="stitch", value=""))
             else:
                 raise Exception(f"Unknown command: {command}")
@@ -472,7 +452,7 @@ class RaspberryPi:
             if action.cat == "obstacles":
                 for obs in action.value["obstacles"]:
                     self.obstacles[obs["id"]] = obs
-                self.request_algo(action.value)
+                self.logger.info(f"Obstacles updated: now have {len(self.obstacles)} obstacles.")
             elif action.cat == "snap":
                 self.snap_and_rec(obstacle_id_with_signal=action.value)
             # elif action.cat == "stitch":
@@ -551,7 +531,7 @@ class RaspberryPi:
         # Log results
         self.logger.info(f"Image recognition results: {results}")
         self.stm_link.send("R0000")
-        # self.android_queue.put(AndroidMessage("image-rec", results))
+        self.android_queue.put(AndroidMessage("image-rec", results))
 
     def request_algo(self, data, robot_x=1, robot_y=1, robot_dir=0, retrying=False):
         """

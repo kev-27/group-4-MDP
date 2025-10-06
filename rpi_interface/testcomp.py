@@ -586,8 +586,8 @@ def test_integration():
     # Sample obstacle data
     TEST_OBS = {
         "obstacles": [
-            {"x": 10, "y": 4, "id": 1, "d": 6},
-            {"x": 7, "y": 16, "id": 2, "d": 4},
+            {"x": 9, "y": 4, "id": 1, "d": 6},
+            {"x": 6, "y": 12, "id": 2, "d": 4},
         ]
     }
 
