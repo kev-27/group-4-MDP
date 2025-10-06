@@ -272,8 +272,7 @@ class RaspberryPi:
                             AndroidMessage("error", "Command queue is empty, did you set obstacles?")
                         )
 
-
-
+    
     def recv_stm(self) -> None:
         """
         [Child Process] Receive acknowledgement messages from STM32, and release the movement lock
@@ -287,29 +286,14 @@ class RaspberryPi:
             if message.startswith("DONE"):
                 self.logger.debug("Acknowledgement 'DONE' from STM32 received.")
 
-                try:
-                    # Release the movement lock (only once per actual movement completion).
-                    try:
-                        self.movement_lock.release()
-                    except Exception as e:
-                        # This is unexpected if movement_lock was acquired before sending command;
-                        # log it for debugging but continue updating state.
-                        self.logger.warning(f"Failed to release movement_lock: {e}")
+                # Release the movement lock safely
+                if self.movement_lock.locked():
+                    self.movement_lock.release()
+                    self.logger.debug("movement_lock released (STM DONE).")
+                else:
+                    self.logger.warning("movement_lock was already released — ignoring duplicate DONE.")
 
-                    # Release retrylock if it exists and is locked.
-                    if hasattr(self, "retrylock"):
-                        try:
-                            self.retrylock.release()
-                        except Exception:
-                            # may not be acquired — that's OK
-                            pass
-
-                    self.logger.debug("ACK from STM32 received, movement lock released.")
-                except Exception as e:
-                    # Defensive: catch and log unexpected errors
-                    self.logger.exception(f"Unexpected error while handling DONE: {e}")
-
-                # Update and report the robot location based on path entry consumed
+                # Update and report robot location
                 try:
                     self.current_location["x"] = cur_location["x"]
                     self.current_location["y"] = cur_location["y"]
@@ -331,7 +315,7 @@ class RaspberryPi:
 
             else:
                 self.logger.warning(f"Ignored unknown message from STM: {message}")
-
+    
     def android_sender(self) -> None:
         """
         [Child process] Responsible for retrieving messages from android_queue and sending them over the Android link.
@@ -351,50 +335,30 @@ class RaspberryPi:
                 self.android_dropped.set()  # check for disconnect
                 self.logger.debug("Event set: Android dropped")
 
+     
     def command_follower(self) -> None:
         """
         [Child Process] processes commands in command_queue.
 
-        Just switch statements
-
-        There are three types of commands:
+        Three types of commands:
         - movement commands to send to STM32
-        - "snapping" an image: i.e. taking a still image of obstacle
-        - finish command signalling completion of path in the maze
+        - "snapping" an image
+        - finish command signaling completion of path
         """
         while True:
             # Retrieve next movement command
             command: str = self.command_queue.get()
-            self.logger.debug("wait for unpause")
-            # Wait for unpause event to be true [Main Trigger]
-            try:
-                self.logger.debug("wait for retrylock")
-                self.retrylock.acquire()
-                self.retrylock.release()
-            except:
-                self.logger.debug("wait for unpause")
-                self.unpause.wait()
-            self.logger.debug("wait for movelock")
-            # Acquire lock first (needed for both moving, and snapping pictures)
+
+            # Wait until start/unpause signal
+            self.logger.debug("Waiting for unpause signal...")
+            self.unpause.wait()
+
+            # Acquire lock before sending command to STM32
+            self.logger.debug("Acquiring movement_lock before sending command...")
             self.movement_lock.acquire()
 
             # STM32 Commands - Send straight to STM32
-            # needs refactoring, consts being defined within class methods is goofy
-            stm32_prefixes = (
-                "A",
-                "C",
-                "DT",
-                "R",
-                "W",
-                "A",
-                "S",
-                "D",
-                "Z",
-                "Q",
-                "E",
-                "X",
-                "P",
-            )
+            stm32_prefixes = ("A", "C", "DT", "R", "W", "S", "D", "Z", "Q", "E", "X", "P")
             if command.startswith(stm32_prefixes):
                 self.stm_link.send(command)
                 self.logger.debug(f"Sending to STM32: {command}")
@@ -402,7 +366,6 @@ class RaspberryPi:
             # Snap command
             elif command.startswith("SNAP"):
                 obstacle_id_with_signal = command.replace("SNAP", "")
-
                 self.rpi_action_queue.put(
                     PiAction(cat="snap", value=obstacle_id_with_signal)
                 )
@@ -416,34 +379,16 @@ class RaspberryPi:
                     f"At FIN, self.current_location: {self.current_location}"
                 )
 
-#                if len(self.failed_obstacles) != 0 and self.failed_attempt == False:
-#                    new_obstacle_list = list(self.failed_obstacles)
-#                    for i in list(self.success_obstacles):
-#                        # {'x': 5, 'y': 11, 'id': 1, 'd': 4}
-#                        i["d"] = 8
-#                        new_obstacle_list.append(i)
-#
-#                    self.logger.info("Attempting to go to failed obstacles")
-#                    self.failed_attempt = True
-#                    self.request_algo(
-#                        {"obstacles": new_obstacle_list, "mode": "0"},
-#                        self.current_location["x"],
-#                        self.current_location["y"],
-#                        self.current_location["d"],
-#                        retrying=True,
-#                    )
-#                    self.retrylock = self.manager.Lock()
-#                    self.movement_lock.release()
-#                    continue
-#
+                # Clear movement and unpause signals safely
+                if self.movement_lock.locked():
+                    self.movement_lock.release()
                 self.unpause.clear()
-                self.movement_lock.release()
+
                 self.logger.info("Commands queue finished.")
-                self.android_queue.put(
-                    AndroidMessage("info", "Commands queue finished.")
-                )
+                self.android_queue.put(AndroidMessage("info", "Commands queue finished."))
                 self.android_queue.put(AndroidMessage("status", "finished"))
                 self.stm_link.send("P0000")
+
             else:
                 raise Exception(f"Unknown command: {command}")
 
