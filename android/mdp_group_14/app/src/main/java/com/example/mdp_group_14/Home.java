@@ -445,13 +445,13 @@ public class Home extends Fragment {
                 return 0;
             case "EAST":
             case "RIGHT":
-                return 1;
+                return 2;
             case "SOUTH":
             case "DOWN":
-                return 2;
+                return 4;
             case "WEST":
             case "LEFT":
-                return 3;
+                return 6;
             default:
                 showLog("WARNING: Unknown direction '" + direction + "', defaulting to NORTH (0)");
                 return 0;
@@ -570,9 +570,9 @@ public class Home extends Fragment {
                     String direction = "";
                     switch (d) {
                         case 0: direction = "up"; break;
-                        case 1: direction = "right"; break;
-                        case 2: direction = "down"; break;
-                        case 3: direction = "left"; break;
+                        case 2: direction = "right"; break;
+                        case 4: direction = "down"; break;
+                        case 6: direction = "left"; break;
                         default: direction = "up"; break;
                     }
                     
@@ -677,7 +677,7 @@ public class Home extends Fragment {
             ArrayList<String> mapCoord = new ArrayList<>();
 
             //STATUS:<input>
-            if (message.contains("STATUS")) {
+            if (message.contains("status")) {
                 robotStatusTextView.setText(message.split(":")[1]);
             }
             // Handle JSON location messages: {"cat": "location", "value": {"x": 1, "y": 1, "d": 0}}
@@ -698,13 +698,13 @@ public class Home extends Fragment {
                             case 0:
                                 direction = "up";    // North
                                 break;
-                            case 1:
+                            case 2:
                                 direction = "right"; // East
                                 break;
-                            case 2:
+                            case 4:
                                 direction = "down";  // South
                                 break;
-                            case 3:
+                            case 6:
                                 direction = "left";  // West
                                 break;
                             default:
@@ -754,30 +754,35 @@ public class Home extends Fragment {
                 }
                 gridMap.setCurCoord(Integer.valueOf(sentCoords[1]) + 2, 19 - Integer.valueOf(sentCoords[0]), direction);
             }
-            //image format from RPI is "TARGET~<obID>~<ImValue>" eg TARGET~3~7
-            else if(message.contains("TARGET")) {
+            // Handle JSON target messages: {"cat": "target", "value": {"obsID": 3, "imageID": 13}}
+            else if (message.trim().startsWith("{") && message.contains("\"cat\": \"target\"")) {
                 try {
-                    String[] cmd = message.split(",");
-                    String temp2="-1";
-                    BluetoothCommunications.getMessageReceivedTextView().append("Obstacle no: " + cmd[1]+ "TARGET ID: " + cmd[2] + "\n");
-
-//                    if (cmd[2].contains("STOP"))
-//                    {
-//                        String temp=cmd[2];
-//                        String[] temp1=temp.split(" ");
-//                        temp2=temp1[0];
-//
-//                    }
-
-                    gridMap.updateIDFromRpi(String.valueOf(Integer.valueOf(cmd[1])-1), cmd[2]);
-                    obstacleID = String.valueOf(Integer.valueOf(cmd[1]) - 2);
-
-
-//                    int ob= Integer.parseInt(obstacleID);
-
-                }
-                catch(Exception e)
-                {
+                    showLog("DEBUG: Processing JSON TARGET message: " + message);
+                    JSONObject jsonMessage = new JSONObject(message.trim());
+                    
+                    if (jsonMessage.has("cat") && jsonMessage.getString("cat").equals("target")) {
+                        JSONObject value = jsonMessage.getJSONObject("value");
+                        int obsID = value.getInt("obsID");
+                        int imageID = value.getInt("imageID");
+                        
+                        showLog("DEBUG: Parsed TARGET - obsID:" + obsID + " imageID:" + imageID);
+                        
+                        // Validate obstacle ID
+                        if (obsID <= 0) {
+                            showLog("ERROR: Invalid obstacle ID " + obsID + ". Must be positive integer.");
+                            return;
+                        }
+                        
+                        // Update UI display
+                        BluetoothCommunications.getMessageReceivedTextView().append("Obstacle no: " + obsID + " TARGET ID: " + imageID + "\n");
+                        
+                        // Update obstacle with target ID (convert obsID from 1-based to 0-based for array indexing)
+                        gridMap.updateIDFromRpi(String.valueOf(obsID - 1), String.valueOf(imageID));
+                        
+                        showLog("SUCCESS: Updated obstacle " + obsID + " with target ID " + imageID);
+                    }
+                } catch (Exception e) {
+                    showLog("ERROR: Failed to parse JSON TARGET message: " + e.getMessage());
                     e.printStackTrace();
                 }
             }

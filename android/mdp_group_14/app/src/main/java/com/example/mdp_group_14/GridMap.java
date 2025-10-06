@@ -379,7 +379,7 @@ public class GridMap extends View {
                     //This makes the coordinates adjustable instead of static
                     op.inMutable = true;
                     //change icon pic
-                    bm = BitmapFactory.decodeResource(getResources(), R.drawable.black, op);
+                    bm = BitmapFactory.decodeResource(getResources(), R.drawable.car_up, op);
 
                     mapscalable = Bitmap.createScaledBitmap(bm, 51, 51, true);
                     xCoord = cells[curCoord[0] - 1][20 - androidRowCoord].startX;
@@ -388,7 +388,7 @@ public class GridMap extends View {
                     break;
                 case "down":
                     op.inMutable = true;
-                    bm = BitmapFactory.decodeResource(getResources(), R.drawable.black, op);
+                    bm = BitmapFactory.decodeResource(getResources(), R.drawable.car_down, op);
                     mapscalable = Bitmap.createScaledBitmap(bm, 51, 51, true);
                     xCoord = cells[curCoord[0] - 1][20 - androidRowCoord].startX;
                     yCoord = cells[curCoord[0]][20 - androidRowCoord - 1].startY;
@@ -396,7 +396,7 @@ public class GridMap extends View {
                     break;
                 case "right":
                     op.inMutable = true;
-                    bm = BitmapFactory.decodeResource(getResources(), R.drawable.black, op);
+                    bm = BitmapFactory.decodeResource(getResources(), R.drawable.car_right, op);
                     mapscalable = Bitmap.createScaledBitmap(bm, 51, 51, true);
                     xCoord = cells[curCoord[0] - 1][20 - androidRowCoord].startX;
                     yCoord = cells[curCoord[0]][20 - androidRowCoord - 1].startY;
@@ -405,7 +405,7 @@ public class GridMap extends View {
                     break;
                 case "left":
                     op.inMutable = true;
-                    bm = BitmapFactory.decodeResource(getResources(), R.drawable.black, op);
+                    bm = BitmapFactory.decodeResource(getResources(), R.drawable.car_left, op);
                     mapscalable = Bitmap.createScaledBitmap(bm, 51, 51, true);
                     xCoord = cells[curCoord[0] - 1][20 - androidRowCoord].startX;
                     yCoord = cells[curCoord[0]][20 - androidRowCoord - 1].startY;
@@ -1031,13 +1031,13 @@ public class GridMap extends View {
                             directionInt = 0;
                             break;
                         case "left":
-                            directionInt = 3;
+                            directionInt = 6;
                             break;
                         case "right":
-                            directionInt = 1;
+                            directionInt = 2;
                             break;
                         case "down":
-                            directionInt = 2;
+                            directionInt = 4;
                             break;
                     }
                     showLog("starting " + "(" + (row - 1) + ","

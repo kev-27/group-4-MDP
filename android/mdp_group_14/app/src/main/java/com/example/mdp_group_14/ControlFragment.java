@@ -124,7 +124,7 @@ public class ControlFragment extends Fragment {
                         updateStatus("Unable to move forward");
                     }
 
-                    Home.printMessage("f");
+                    Home.printMessage("{\"cat\": \"manual\", \"value\": \"F\"}");
                 }
                 else
                     updateStatus("Please press 'SET START POINT'");
@@ -139,7 +139,7 @@ public class ControlFragment extends Fragment {
                 if (gridMap.getCanDrawRobot()) {
                     gridMap.moveRobot("right");
                     Home.refreshLabel();
-                    Home.printMessage("fr");
+                    Home.printMessage("{\"cat\": \"manual\", \"value\": \"FR\"}");
 //                    showLog("test");
                     System.out.println(Arrays.toString(gridMap.getCurCoord()));
                 }
@@ -155,7 +155,7 @@ public class ControlFragment extends Fragment {
                 if (gridMap.getCanDrawRobot()) {
                     gridMap.moveRobot("backright");
                     Home.refreshLabel();
-                    Home.printMessage("br");
+                    Home.printMessage("{\"cat\": \"manual\", \"value\": \"BR\"}");
                     System.out.println(Arrays.toString(gridMap.getCurCoord()));
                 }
                 else
@@ -175,7 +175,7 @@ public class ControlFragment extends Fragment {
                         updateStatus("moving backward");
                     else
                         updateStatus("Unable to move backward");
-                    Home.printMessage("b");
+                    Home.printMessage("{\"cat\": \"manual\", \"value\": \"B\"}");
                 }
                 else
                     updateStatus("Please press 'SET START POINT'");
@@ -191,7 +191,7 @@ public class ControlFragment extends Fragment {
                     gridMap.moveRobot("left");
                     Home.refreshLabel();
                     updateStatus("turning left");
-                    Home.printMessage("fl");
+                    Home.printMessage("{\"cat\": \"manual\", \"value\": \"FL\"}");
                 }
                 else
                     updateStatus("Please press 'SET START POINT'");
@@ -206,7 +206,7 @@ public class ControlFragment extends Fragment {
                     gridMap.moveRobot("backleft");
                     Home.refreshLabel();
                     updateStatus("turning left");
-                    Home.printMessage("bl");
+                    Home.printMessage("{\"cat\": \"manual\", \"value\": \"BL\"}");
                 }
                 else
                     updateStatus("Please press 'SET START POINT'");
@@ -231,8 +231,8 @@ public class ControlFragment extends Fragment {
                     String msg = gridMap.getObstacles();
                     // Send this String over via BT
                     //Home.printCoords(msg);
-                    //Send BEGIN to the robot
-                    Home.printMessage("BEGIN"); //send a string "BEGIN" to the RPI
+                    //Send start JSON to the robot
+                    Home.printMessage("{\"cat\": \"control\", \"value\": \"start\"}"); //send JSON start to the RPI
                     // Start timer
                     Home.stopTimerFlag = false;
                     showToast("Task 1 timer start!");
@@ -262,7 +262,7 @@ public class ControlFragment extends Fragment {
                 }
                 else if (fastestToggleBtn.getText().equals("STOP")) {
                     showToast("Task 2 timer start!");
-                    Home.printMessage("BEGIN"); //send a string "BEGIN" to the RPI
+                    Home.printMessage("{\"cat\": \"control\", \"value\": \"start\"}"); //send JSON start to the RPI
                     Home.stopWk9TimerFlag = false;
                     robotStatusTextView.setText("Task 2 Started");
                     fastestTimer = System.currentTimeMillis();
@@ -329,7 +329,7 @@ public class ControlFragment extends Fragment {
                     timerHandler.postDelayed(timerRunnableExplore, 0);
                 }
                 //ok
-                Home.printMessage("BEGIN"); //send a string "BEGIN" to the RPI
+                Home.printMessage("{\"cat\": \"control\", \"value\": \"start\"}"); //send JSON start to the RPI
                 showLog("Exiting startSend");
             }
         });
