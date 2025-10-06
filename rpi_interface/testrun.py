@@ -50,7 +50,7 @@ class RaspberryPi:
     - send msg to android
     - listen msg from stm
     - process movement command
-    - process actions for image rec: snap an image, stitch together images
+    - process actions for image rec: snap an image
     """
 
     def __init__(self):
@@ -285,29 +285,26 @@ class RaspberryPi:
                         self.logger.warning(
                             "The command queue is empty, please set obstacles."
                         )
-                    """
-                       self.android_queue.put(
+
+                        self.android_queue.put(
                             AndroidMessage(
                                 "error",
                                 "Command queue is empty, did you set obstacles?",
                             )
                         )
-                    """
 
     def recv_stm(self) -> None:
         """
         [Child Process] Receive acknowledgement messages from STM32, and release the movement lock
-
-        The very first command is presumed to be RS00.
         """
         while True:
             message: str = self.stm_link.recv()
             self.logger.debug(f"Received {message}")
             if message.startswith("DONE"):
                 # if self.rs_flag == False:
-                    # self.rs_flag = True
-                self.logger.debug("ACK for RS00 from STM32 received.")
-                    # continue
+                # self.rs_flag = True
+                self.logger.debug("Acknowledgement 'DONE' from STM32 received.")
+                # continue
                 try:
                     self.movement_lock.release()
                     try:
@@ -325,7 +322,6 @@ class RaspberryPi:
                     self.current_location["d"] = cur_location["d"]
                     self.logger.info(f"self.current_location = {self.current_location}")
 
-                    """
                     self.android_queue.put(
                         AndroidMessage(
                             "location",
@@ -336,7 +332,6 @@ class RaspberryPi:
                             },
                         )
                     )
-                  """
 
                 except Exception:
                     self.logger.warning("Tried to release a released lock!")
@@ -392,23 +387,10 @@ class RaspberryPi:
             # STM32 Commands - Send straight to STM32
             # needs refactoring, consts being defined within class methods is goofy
             stm32_prefixes = (
-                "FS",
-                "BS",
-                "FW",
-                "BW",
-                "FL",
-                "FR",
-                "BL",
-                "BR",
-                "TL",
-                "TR",
                 "A",
                 "C",
                 "DT",
-                "STOP",
-                "ZZ",
-                "RS",
-                # following is for demo
+                "R",
                 "W",
                 "A",
                 "S",
@@ -467,7 +449,8 @@ class RaspberryPi:
                     AndroidMessage("info", "Commands queue finished.")
                 )
                 self.android_queue.put(AndroidMessage("status", "finished"))
-                self.rpi_action_queue.put(PiAction(cat="stitch", value=""))
+                self.stm_link.send("R0000")
+                # self.rpi_action_queue.put(PiAction(cat="stitch", value=""))
             else:
                 raise Exception(f"Unknown command: {command}")
 
@@ -492,8 +475,8 @@ class RaspberryPi:
                 self.request_algo(action.value)
             elif action.cat == "snap":
                 self.snap_and_rec(obstacle_id_with_signal=action.value)
-            elif action.cat == "stitch":
-                self.request_stitch()
+            # elif action.cat == "stitch":
+            # self.request_stitch()
 
     def snap_and_rec(self, obstacle_id_with_signal: str) -> None:
         """
@@ -515,31 +498,25 @@ class RaspberryPi:
         filename = f"{int(time.time())}_{obstacle_id}_{signal}.jpg"
         url = f"http://{IMG_API_IP}:{IMG_API_PORT}/image"
 
-        # Capture image with PiCamera
         with PiCamera() as camera:
-            camera.resolution = (800, 800)  # simple resolution, can adjust
+            camera.resolution = (800, 800)
             camera.start_preview()
-            time.sleep(0.5)  # let auto-adjust settle
+            time.sleep(0.5)
             camera.capture(filename)
             self.logger.info(f"Image captured: {filename}")
 
-        # Send to API
         try:
             with open(filename, "rb") as f:
                 response = requests.post(
                     url,
                     files={"file": f},
-                    data={
-                        "NUM_OBSTACLES": obstacle_id  # passing int here
-                    },
+                    data={"NUM_OBSTACLES": obstacle_id},
                 )
             results = json.loads(response.content)
         except Exception as e:
             self.logger.error(f"Error calling image-rec API: {e}")
             return
 
-        # Handle response keys safely
-        # Convert keys to int to access obstacles dictionary
         try:
             result_num_obs = int(results["num_obstacles"])
             predicted_id = results.get("predicted_id", "-1")
@@ -552,9 +529,13 @@ class RaspberryPi:
             # Failed recognition: append obstacle dict to failed list
             if result_num_obs in self.obstacles:
                 self.failed_obstacles.append(self.obstacles[result_num_obs])
-                self.logger.info(f"Added Obstacle {result_num_obs} to failed obstacles.")
+                self.logger.info(
+                    f"Added Obstacle {result_num_obs} to failed obstacles."
+                )
             else:
-                self.logger.warning(f"Obstacle {result_num_obs} not found in obstacles dict.")
+                self.logger.warning(
+                    f"Obstacle {result_num_obs} not found in obstacles dict."
+                )
         else:
             # Successful recognition: append obstacle dict to success list
             if obstacle_id in self.obstacles:
@@ -563,13 +544,14 @@ class RaspberryPi:
                 res = f"obstacleID: {result_num_obs}, imageID: {int(predicted_id)}"
                 # self.android_queue.put(AndroidMessage("target", res))
             else:
-                self.logger.warning(f"Obstacle {obstacle_id} not found in obstacles dict.")
+                self.logger.warning(
+                    f"Obstacle {obstacle_id} not found in obstacles dict."
+                )
 
         # Log results
         self.logger.info(f"Image recognition results: {results}")
         self.stm_link.send("R0000")
         # self.android_queue.put(AndroidMessage("image-rec", results))
-
 
     def request_algo(self, data, robot_x=1, robot_y=1, robot_dir=0, retrying=False):
         """
@@ -626,26 +608,26 @@ class RaspberryPi:
         )
         self.logger.info("Commands and path received Algo API. Robot is ready to move.")
 
-    def request_stitch(self):
-        """Sends a stitch request to the image recognition API to stitch the different images together"""
-        url = f"http://{IMG_API_IP}:{IMG_API_PORT}/stitch"
-        response = requests.get(url)
-
-        # If error, then log, and send error to Android
-        if response.status_code != 200:
-            # Notify android
-            self.android_queue.put(
-                AndroidMessage(
-                    "error", "Something went wrong when requesting stitch from the API."
-                )
-            )
-            self.logger.error(
-                "Something went wrong when requesting stitch from the API."
-            )
-            return
-
-        self.logger.info("Images stitched!")
-        self.android_queue.put(AndroidMessage("info", "Images stitched!"))
+    #     def request_stitch(self):
+    #         """Sends a stitch request to the image recognition API to stitch the different images together"""
+    #         url = f"http://{IMG_API_IP}:{IMG_API_PORT}/stitch"
+    #         response = requests.get(url)
+    #
+    #         # If error, then log, and send error to Android
+    #         if response.status_code != 200:
+    #             # Notify android
+    #             self.android_queue.put(
+    #                 AndroidMessage(
+    #                     "error", "Something went wrong when requesting stitch from the API."
+    #                 )
+    #             )
+    #             self.logger.error(
+    #                 "Something went wrong when requesting stitch from the API."
+    #             )
+    #             return
+    #
+    #         self.logger.info("Images stitched!")
+    #         self.android_queue.put(AndroidMessage("info", "Images stitched!"))
 
     def clear_queues(self):
         """Clear both command and path queues"""
@@ -661,7 +643,6 @@ def check_api(self) -> bool:
     Returns:
         bool: True if both are running, False otherwise.
     """
-    # Check image recognition API
     image_ok = False
     image_url = f"http://{IMG_API_IP}:{IMG_API_PORT}/status"
     try:
@@ -678,7 +659,6 @@ def check_api(self) -> bool:
     except Exception as e:
         self.logger.warning(f"Image API Exception: {e}")
 
-    # Check algorithm API
     algo_ok = False
     algo_url = f"http://{ALGO_API_IP}:{ALGO_API_PORT}/status"
     try:
@@ -695,7 +675,6 @@ def check_api(self) -> bool:
     except Exception as e:
         self.logger.warning(f"Algorithm API Exception: {e}")
 
-    # Only return True if both are OK
     return image_ok and algo_ok
 
 
