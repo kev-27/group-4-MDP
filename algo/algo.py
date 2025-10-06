@@ -322,15 +322,19 @@ class MazeSolver:
                 # Turning displacement is either 4-2 or 3-1
                 bigger_change = turn_wrt_big_turns[self.big_turn][0]
                 smaller_change = turn_wrt_big_turns[self.big_turn][1]
-
+                #FOR TESTING FIXED TURNS 6,2
+                bigger_change = 4
+                smaller_change=2
+                bigger_change2 = 4
+                smaller_change2 = 3
                 # north <-> east
                 if direction == Direction.NORTH and md == Direction.EAST:
 
                     # Check for valid position
-                    if self.grid.reachable(x + bigger_change, y + smaller_change, turn = True) and self.grid.reachable(x, y, preTurn = True):
+                    if self.grid.reachable(x + bigger_change2, y + smaller_change2, turn = True) and self.grid.reachable(x, y, preTurn = True):
                         # Get safe cost of destination
-                        safe_cost = self.get_safe_cost(x + bigger_change, y + smaller_change)
-                        neighbors.append((x + bigger_change, y + smaller_change, md, safe_cost + 10))
+                        safe_cost = self.get_safe_cost(x + bigger_change2, y + smaller_change2)
+                        neighbors.append((x + bigger_change2, y + smaller_change2, md, safe_cost + 10))
 
                     # Check for valid position
                     if self.grid.reachable(x - smaller_change, y - bigger_change, turn = True) and self.grid.reachable(x, y, preTurn = True):
@@ -350,9 +354,9 @@ class MazeSolver:
                 # east <-> south
                 if direction == Direction.EAST and md == Direction.SOUTH:
                     
-                    if self.grid.reachable(x + smaller_change, y - bigger_change, turn = True) and self.grid.reachable(x, y, preTurn = True):
-                        safe_cost = self.get_safe_cost(x + smaller_change, y - bigger_change)
-                        neighbors.append((x + smaller_change, y - bigger_change, md, safe_cost + 10))
+                    if self.grid.reachable(x + smaller_change2, y - bigger_change2, turn = True) and self.grid.reachable(x, y, preTurn = True):
+                        safe_cost = self.get_safe_cost(x + smaller_change2, y - bigger_change2)
+                        neighbors.append((x + smaller_change2, y - bigger_change2, md, safe_cost + 10))
 
                     if self.grid.reachable(x - bigger_change, y + smaller_change, turn = True) and self.grid.reachable(x, y, preTurn = True):
                         safe_cost = self.get_safe_cost(x - bigger_change, y + smaller_change)
@@ -369,9 +373,9 @@ class MazeSolver:
 
                 # south <-> west
                 if direction == Direction.SOUTH and md == Direction.WEST:
-                    if self.grid.reachable(x - bigger_change, y - smaller_change, turn = True) and self.grid.reachable(x, y, preTurn = True):
-                        safe_cost = self.get_safe_cost(x - bigger_change, y - smaller_change)
-                        neighbors.append((x - bigger_change, y - smaller_change, md, safe_cost + 10))
+                    if self.grid.reachable(x - bigger_change2, y - smaller_change2, turn = True) and self.grid.reachable(x, y, preTurn = True):
+                        safe_cost = self.get_safe_cost(x - bigger_change2, y - smaller_change2)
+                        neighbors.append((x - bigger_change2, y - smaller_change2, md, safe_cost + 10))
 
                     if self.grid.reachable(x + smaller_change, y + bigger_change, turn = True) and self.grid.reachable(x, y, preTurn = True):
                         safe_cost = self.get_safe_cost(x + smaller_change, y + bigger_change)
@@ -388,9 +392,9 @@ class MazeSolver:
 
                 # west <-> north
                 if direction == Direction.WEST and md == Direction.NORTH:
-                    if self.grid.reachable(x - smaller_change, y + bigger_change, turn = True) and self.grid.reachable(x, y, preTurn = True):
-                        safe_cost = self.get_safe_cost(x - smaller_change, y + bigger_change)
-                        neighbors.append((x - smaller_change, y + bigger_change, md, safe_cost + 10))
+                    if self.grid.reachable(x - smaller_change2, y + bigger_change2, turn = True) and self.grid.reachable(x, y, preTurn = True):
+                        safe_cost = self.get_safe_cost(x - smaller_change2, y + bigger_change2)
+                        neighbors.append((x - smaller_change2, y + bigger_change2, md, safe_cost + 10))
 
                     if self.grid.reachable(x + bigger_change, y - smaller_change, turn = True) and self.grid.reachable(x, y, preTurn = True):
                         safe_cost = self.get_safe_cost(x + bigger_change, y - smaller_change)
