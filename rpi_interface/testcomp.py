@@ -330,7 +330,7 @@ def test_checklist_C9():
         while True:
             obstacleID = int(input("Enter obstacle ID: "))
             imgID = int(input("Enter imgID: "))
-            json_pair = {"id1": obstacleID, "id2": imgID}
+            json_pair = {"obsID": obstacleID, "imageID": imgID}
             rpi.android_queue.put(AndroidMessage("target", json_pair))
             time.sleep(1)
 
