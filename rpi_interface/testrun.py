@@ -637,45 +637,45 @@ class RaspberryPi:
             self.path_queue.get()
 
 
-def check_api(self) -> bool:
-    """Check whether image recognition and algorithm API server is up and running
+    def check_api(self) -> bool:
+        """Check whether image recognition and algorithm API server is up and running
 
-    Returns:
-        bool: True if both are running, False otherwise.
-    """
-    image_ok = False
-    image_url = f"http://{IMG_API_IP}:{IMG_API_PORT}/status"
-    try:
-        response = requests.get(image_url, timeout=1)
-        if response.status_code == 200:
-            self.logger.debug("Image API is up!")
-            image_ok = True
-        else:
-            self.logger.warning("Image API returned non-200 status.")
-    except requests.ConnectionError:
-        self.logger.warning("Image recognition API Connection Error")
-    except requests.Timeout:
-        self.logger.warning("Image recognition API Timeout")
-    except Exception as e:
-        self.logger.warning(f"Image API Exception: {e}")
+        Returns:
+            bool: True if both are running, False otherwise.
+        """
+        image_ok = False
+        image_url = f"http://{IMG_API_IP}:{IMG_API_PORT}/status"
+        try:
+            response = requests.get(image_url, timeout=1)
+            if response.status_code == 200:
+                self.logger.debug("Image API is up!")
+                image_ok = True
+            else:
+                self.logger.warning("Image API returned non-200 status.")
+        except requests.ConnectionError:
+            self.logger.warning("Image recognition API Connection Error")
+        except requests.Timeout:
+            self.logger.warning("Image recognition API Timeout")
+        except Exception as e:
+            self.logger.warning(f"Image API Exception: {e}")
 
-    algo_ok = False
-    algo_url = f"http://{ALGO_API_IP}:{ALGO_API_PORT}/status"
-    try:
-        response = requests.get(algo_url, timeout=1)
-        if response.status_code == 200:
-            self.logger.debug("Algorithm API is up!")
-            algo_ok = True
-        else:
-            self.logger.warning("Algorithm API returned non-200 status.")
-    except requests.ConnectionError:
-        self.logger.warning("Algorithm API Connection Error")
-    except requests.Timeout:
-        self.logger.warning("Algorithm API Timeout")
-    except Exception as e:
-        self.logger.warning(f"Algorithm API Exception: {e}")
+        algo_ok = False
+        algo_url = f"http://{ALGO_API_IP}:{ALGO_API_PORT}/status"
+        try:
+            response = requests.get(algo_url, timeout=1)
+            if response.status_code == 200:
+                self.logger.debug("Algorithm API is up!")
+                algo_ok = True
+            else:
+                self.logger.warning("Algorithm API returned non-200 status.")
+        except requests.ConnectionError:
+            self.logger.warning("Algorithm API Connection Error")
+        except requests.Timeout:
+            self.logger.warning("Algorithm API Timeout")
+        except Exception as e:
+            self.logger.warning(f"Algorithm API Exception: {e}")
 
-    return image_ok and algo_ok
+        return image_ok and algo_ok
 
 
 if __name__ == "__main__":
