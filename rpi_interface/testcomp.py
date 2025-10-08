@@ -274,7 +274,7 @@ def test_camera_snap():
     """
     logger.info("=== Camera Snap Test Started ===")
 
-    check_api()
+    # check_api()
 
     img_cnt = 1
     url = f"http://{IMG_API_IP}:{IMG_API_PORT}/image"
@@ -478,7 +478,7 @@ def test_A5():
     url = f"http://{API_IP}:{API_PORT}/image"
 
     try:
-        check_api()
+        # check_api()
         rpi.stm_link.connect()
 
         image_id = -1
@@ -649,9 +649,6 @@ def test_integration():
 
         logger.info("Test complete.")
 
-
-if __name__ == "__main__":
-    test_integration()
 
 if __name__ == "__main__":
     if "--test-android" in sys.argv:

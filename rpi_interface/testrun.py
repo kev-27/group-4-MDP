@@ -125,7 +125,7 @@ class RaspberryPi:
             )
             self.stm_link.connect()
             # Check whether image recognition and algorithm API server is up and running
-            self.check_api()
+            # self.check_api()
             # ======================================
 
             # Set the defined class methods as a parallel process
@@ -389,7 +389,7 @@ class RaspberryPi:
                 "X",
                 "P",
             )
-            if command.startswith(stm32_prefixes):
+            if command.startswith(stm32_prefixes) and not command.startswith("SNAP"):
                 # recv_stm is running as an independent child process
                 self.stm_link.send(command)
                 self.logger.debug(f"Sending to STM32: {command}")
@@ -412,7 +412,7 @@ class RaspberryPi:
                     AndroidMessage("info", "Commands queue finished.")
                 )
                 self.android_queue.put(AndroidMessage("status", "finished"))
-                self.stm_link.send("P0000")  # brake command
+                # self.stm_link.send("P0000")  # brake command
 
             else:
                 raise Exception(f"Unknown command: {command}")
@@ -501,10 +501,8 @@ class RaspberryPi:
                         self.logger.info(
                             f"Obstacle {result_num_obs} successfully recognized."
                         )
-                        res = (
-                            f"'obsID': {result_num_obs}, 'imageID': {int(predicted_id)}"
-                        )
-                        self.android_queue.put(AndroidMessage("target", res))
+                        json_pair = {"obsID": result_num_obs, "imageID": int(predicted_id)}
+                        self.android_queue.put(AndroidMessage("target", json_pair))
                     else:
                         self.logger.warning(
                             f"Obstacle {obstacle_id} not found in obstacles dict."
@@ -518,8 +516,10 @@ class RaspberryPi:
 
         finally:
             self.logger.info("Snap completed, releasing movement lock")
-            if self.movement_lock.locked():
+            try:
                 self.movement_lock.release()
+            except Exception:
+               self.logger.warning("lock already released") 
 
     def request_algo(self, data, robot_x=1, robot_y=1, robot_dir=0, retrying=False):
         """
