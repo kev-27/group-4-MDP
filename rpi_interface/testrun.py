@@ -3,7 +3,7 @@ from picamera import PiCamera
 import json
 import queue
 import time
-from multiprocessing import Process, Manager
+from multiprocessing import Process, Manager, Lock
 from typing import Optional
 import os
 import requests
@@ -76,7 +76,8 @@ class RaspberryPi:
 
         self.unpause = self.manager.Event()
 
-        self.movement_lock = self.manager.Lock()
+        # self.movement_lock = self.manager.Lock()
+        self.movement_lock = Lock()
 
         self.android_queue = self.manager.Queue()  # Messages to send to Android
 
