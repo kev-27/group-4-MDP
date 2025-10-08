@@ -87,11 +87,13 @@ class Obstacle(CellState):
 
         # If the obstacle is facing north, then robot's cell state must be facing south
         if self.direction == Direction.NORTH:
+            #SELF REFERS TO THE OBSTACLE'S COORIDNATES, IT IS CALCULATING IF THE ROBOT IS VALID FROM VIEIWING IT AT A DIST.
             #TLDR CALCULATES IF THE ENDSTATE IS VALID WHEN THE 
-           # ROBOT IS 3/4 UNITS AWAY WHILE FACING IT, WITH 1 GRID SIDE DEVIATION, RETRYING ALLOWS 5 UNITS AWAY
+           # ROBOT IS 3/4 UNITS AWAY WHILE FACING IT (FROM CENTRE OF BOT), WITH 1 GRID SIDE DEVIATION, RETRYING ALLOWS 5 UNITS AWAY
             if retrying == False:
                 # Or (x, y + 3)
                 if is_valid(self.x, self.y + 1 + EXPANDED_CELL * 2):
+                    #MEANS THE ROBOT CAN SAFELY REACH IT WHILE BEING 3 SQUARES FROM THE OBSTACLE, WRT TO BOT CENTER
                     cells.append(CellState(
                         self.x, self.y + 1 + EXPANDED_CELL * 2, Direction.SOUTH, self.obstacle_id, 5))
                 # Or (x, y + 4)
@@ -325,11 +327,11 @@ class Grid:
         """
         return self.obstacles
 
-    def reachable(self, x: int, y: int, turn=False, preTurn=False) -> bool:
+    def reachable(self, x: int, y: int,  turn=False, preTurn=False,direction =None) -> bool:
         """Checks whether the given x,y coordinate is reachable/safe. Criterion is as such:
         - Must be at least 4 units away in total (x+y) from the obstacle
         - Greater distance (x or y distance) must be at least 3 units away from obstacle
-
+        - CANNOT BE LESS THAN 3 UNITS AWAY FROM AN OBSTACLE
         Args:
             x (int): _description_
             y (int): _description_
@@ -337,10 +339,10 @@ class Grid:
         Returns:
             bool: _description_
         """
-        
+
         if not self.is_valid_coord(x, y):
             return False
-
+        
         for ob in self.obstacles:
             # print(f"Looking at position x:{x} y:{y} against ob: {ob.x} {ob.y}")
             if ob.x == 4 and ob.y <= 4 and x < 4 and y < 4:
@@ -351,9 +353,7 @@ class Grid:
             #     continue
 
             # Must be at least 4 units away in total (x+y)
-            if abs(ob.x - x) + abs(ob.y - y) >= 4:
-                # print(f"ob.x: {ob.x} ob.y: {ob.y} x: {x} y:{y} Triggered more than 3 units bypass")
-                continue
+            
             # If max(x,y) is less than 3 units away, consider not reachable
             # if max(abs(ob.x - x), abs(ob.y - y)) < EXPANDED_CELL * 2 + 1:
             if turn:
@@ -362,12 +362,26 @@ class Grid:
                     #     print(f"ob.x: {ob.x} ob.y: {ob.y} x: {x} y:{y} Triggered less than 3 max units trap")
                     return False
             if preTurn:
-                if max(abs(ob.x - x), abs(ob.y - y)) < EXPANDED_CELL * 2 + 1:
-                    # if ob.x == 0 and ob.y == 10 and x == 1 and y == 12:
-                    #     print(f"ob.x: {ob.x} ob.y: {ob.y} x: {x} y:{y} Triggered less than 3 max units trap")
-                    return False
-            else:
-                if max(abs(ob.x - x), abs(ob.y - y)) < 2:
+                #TO FIND DIST FROM ROBOT TO OBSTACLE, ASSUMING OBSTACLE RIGHT IN FRONT
+                dist = max(abs(ob.x - x), abs(ob.y - y)) 
+                if dist< 5: #5 MEANS 3 GRID SPACE BETW OBST. AND ROBOT           
+                    if direction == Direction.NORTH and ob.y > y and abs(ob.x - x) < 3:
+                        return False
+                    elif direction == Direction.SOUTH and ob.y < y and abs(ob.x - x) < 3:
+                        return False
+                    elif direction == Direction.EAST and ob.x > x and abs(ob.y - y) < 3:
+                       # print("Inside preturn loop\n")
+                        #print(ob.x,ob.y)
+                        return False
+                    elif direction == Direction.WEST and ob.x < x and abs(ob.y - y) < 3:
+                        return False
+                    else:
+                        continue #CURRENT OBJECT IS SAFE
+            if abs(ob.x - x) + abs(ob.y - y) >= 4:
+                # print(f"ob.x: {ob.x} ob.y: {ob.y} x: {x} y:{y} Triggered more than 3 units bypass")
+                continue
+            else: #IF GOING STRAIGHT , JUST SEE IF ANY OBSTACLE IS RIGHT BESIDE THE ROBOT'S EDGE
+                if max(abs(ob.x - x), abs(ob.y - y)) < 3:
                     # print(f"ob.x: {ob.x} ob.y: {ob.y} x: {x} y:{y} Triggered less than 3 max units trap")
                     return False
 

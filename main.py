@@ -51,7 +51,7 @@ def path_finding():
     
     # Based on the shortest path, generate commands for the robot
     commands = command_generator(optimal_path, obstacles)
-
+    #print(optimal_path)
     # Get the starting location and add it to path_results
     path_results = [optimal_path[0].get_dict()]
     # Process each command individually and append the location the robot should be after executing that command to path_results
