@@ -3,7 +3,7 @@ from picamera import PiCamera
 import json
 import queue
 import time
-from multiprocessing import Process, Manager, Lock
+from multiprocessing import Process, Manager
 from typing import Optional
 import os
 import requests
@@ -77,7 +77,7 @@ class RaspberryPi:
         self.unpause = self.manager.Event()
 
         # self.movement_lock = self.manager.Lock()
-        self.movement_lock = Lock()
+        self.movement_lock = self.manager.Lock()
 
         self.android_queue = self.manager.Queue()  # Messages to send to Android
 
@@ -298,10 +298,10 @@ class RaspberryPi:
                 self.logger.debug("Acknowledgement 'DONE' from STM32 received.")
 
                 # Release the movement lock safely
-                if self.movement_lock.locked():
+                try:
                     self.movement_lock.release()
                     self.logger.debug("movement_lock released (STM DONE).")
-                else:
+                except Exception:
                     self.logger.warning(
                         "movement_lock was already released — ignoring duplicate DONE."
                     )
