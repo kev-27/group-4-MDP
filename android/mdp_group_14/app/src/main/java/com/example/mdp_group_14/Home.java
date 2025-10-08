@@ -681,7 +681,7 @@ public class Home extends Fragment {
                 robotStatusTextView.setText(message.split(":")[1]);
             }
             // Handle JSON location messages: {"cat": "location", "value": {"x": 1, "y": 1, "d": 0}}
-            else if (message.trim().startsWith("{") && message.contains("\"cat\":\"location\"")) {
+            else if (message.trim().startsWith("{") && message.contains("\"cat\": \"location\"")) {
                 try {
                     showLog("DEBUG: Processing JSON location message: " + message);
                     JSONObject jsonMessage = new JSONObject(message.trim());
@@ -714,9 +714,9 @@ public class Home extends Fragment {
                         
                         showLog("DEBUG: Parsed location - X:" + x + " Y:" + y + " Direction:" + direction + " (d=" + d + ")");
                         
-                        // Convert coordinates to grid system (add offset and flip Y if needed)
-                        int gridX = x + 2;  // Add offset for grid system
-                        int gridY = 19 - y; // Convert Y coordinate (flip and offset)
+                        // Convert from RPi 0-19 range to Android grid system
+                        int gridX = x + 2;  // Android grid columns are 2-20
+                        int gridY = y + 1;  // Android grid rows are 1-19
                         
                         showLog("DEBUG: Converted to grid coordinates - GridX:" + gridX + " GridY:" + gridY);
                         

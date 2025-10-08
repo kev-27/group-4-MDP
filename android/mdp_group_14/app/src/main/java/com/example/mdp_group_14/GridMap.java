@@ -490,8 +490,8 @@ public class GridMap extends View {
 
         dir = (direction.equals("up")) ? "NORTH" : (direction.equals("down")) ? "SOUTH" : (direction.equals("left")) ? "WEST" : "EAST";
 
-        if ((col - 1) >= 0 && (row - 1) >= 0) {
-            Home.printMessage("ROBOT" + "," + (col - 1) + "," + (row - 1) + "," + dir.toUpperCase());
+        if ((col - 2) >= 0 && (row - 1) >= 0) {
+            Home.printMessage("ROBOT" + "," + (col - 2) + "," + (row - 1) + "," + dir.toUpperCase());
         } else {
             showLog("out of grid");
         }
@@ -595,7 +595,7 @@ public class GridMap extends View {
         TextView directionAxisTextView = ((Activity) this.getContext())
                 .findViewById(R.id.directionAxisTextView);
 
-        xAxisTextView.setText(String.valueOf(col - 1));
+        xAxisTextView.setText(String.valueOf(col - 2));
         yAxisTextView.setText(String.valueOf(row - 1));
         directionAxisTextView.setText(direction);
         //updateStatus((col-1)+","+(row-1)+","+direction);
@@ -617,7 +617,7 @@ public class GridMap extends View {
 
         if (((col - 1)) >= 0 && row >= 0) {
 
-            Home.printMessage("OBSTACLE" + "," + obstacleNumber + "," + (col - 1) * 10 + "," + (19 - row) * 10 + "," + (imageBearings.get(19 - row)[col - 1]).toUpperCase() + "\n");
+            Home.printMessage("OBSTACLE" + "," + obstacleNumber + "," + (col - 1) + "," + (19 - row) + "," + (imageBearings.get(19 - row)[col - 1]).toUpperCase() + "\n");
 //            BluetoothCommunications.getMessageReceivedTextView().append(Integer.toString((col - 1))+"\n");
 //            BluetoothCommunications.getMessageReceivedTextView().append(Integer.toString((19 - row))+"\n");
 //            BluetoothCommunications.getMessageReceivedTextView().append((imageBearings.get(19 - row)[col - 1]).toUpperCase()+"\n");
@@ -2146,6 +2146,7 @@ public class GridMap extends View {
 
         return msg;
     }
+
 
     // Updating the obstacle image id (sent over by RPi)
     public boolean updateIDFromRpi(String obstacleID, String imageID) {
