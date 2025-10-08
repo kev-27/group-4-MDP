@@ -406,6 +406,7 @@ class RaspberryPi:
             elif command == "FIN":
 
                 self.unpause.clear()
+                self.obstacles.clear()
 
                 self.logger.info("Commands queue finished.")
                 self.android_queue.put(
@@ -501,7 +502,10 @@ class RaspberryPi:
                         self.logger.info(
                             f"Obstacle {result_num_obs} successfully recognized."
                         )
-                        json_pair = {"obsID": result_num_obs, "imageID": int(predicted_id)}
+                        json_pair = {
+                            "obsID": result_num_obs,
+                            "imageID": int(predicted_id),
+                        }
                         self.android_queue.put(AndroidMessage("target", json_pair))
                     else:
                         self.logger.warning(
@@ -519,7 +523,7 @@ class RaspberryPi:
             try:
                 self.movement_lock.release()
             except Exception:
-               self.logger.warning("lock already released") 
+                self.logger.warning("lock already released")
 
     def request_algo(self, data, robot_x=1, robot_y=1, robot_dir=0, retrying=False):
         """
