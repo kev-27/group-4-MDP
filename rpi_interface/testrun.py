@@ -125,7 +125,7 @@ class RaspberryPi:
             )
             self.stm_link.connect()
             # Check whether image recognition and algorithm API server is up and running
-            # self.check_api()
+            self.check_api()
             # ======================================
 
             # Set the defined class methods as a parallel process
@@ -407,6 +407,7 @@ class RaspberryPi:
 
                 self.unpause.clear()
                 self.obstacles.clear()
+                self.movement_lock.release()
 
                 self.logger.info("Commands queue finished.")
                 self.android_queue.put(

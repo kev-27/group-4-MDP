@@ -274,7 +274,7 @@ def test_camera_snap():
     """
     logger.info("=== Camera Snap Test Started ===")
 
-    # check_api()
+    check_api()
 
     img_cnt = 1
     url = f"http://{IMG_API_IP}:{IMG_API_PORT}/image"
