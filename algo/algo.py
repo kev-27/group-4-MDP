@@ -176,11 +176,9 @@ class MazeSolver:
         #print(all_view_positions)
         #print(f"all_view_positions: {all_view_positions}")
         #print(f"All view position: {all_view_positions}")
-
         for op in self.get_visit_options(len(all_view_positions)):
             # op is binary string of length len(all_view_positions) == len(obstacles)
             #TLDR OP IS EACH PERMUTATION OF SIMPLY VISITING DIFFERENT OBSTACLES, NOT ACCOUNTING FOR VIEWS
-  
             # Initialize `items` to be a list containing the robot's start state as the first item
             items = [self.robot.get_start_state()]
             # Initialize `cur_view_positions` to be an empty list
@@ -191,43 +189,54 @@ class MazeSolver:
             
             # For each obstacle
             for idx in range(len(all_view_positions)):
-                # If robot is visiting
+                # If robot is visiting, MEANING 1 IN THE BINARY STRING
                 if op[idx] == '1':
                     # Add possible cells to `items`
                     items = items + all_view_positions[idx]
                     # Add possible cells to `cur_view_positions`
                     cur_view_positions.append(all_view_positions[idx])
                     #print("obstacle: {}\n".format(self.grid.obstacles[idx]))
-
+            #ITEMS IS START POINT + EVERY POSSIBLE VIEW STATE
             # Generate the path cost for the items
             self.path_cost_generator(items) #COMPUTES AND STORES ALL PAIR DISTANCES FROM ROBOT START TO EACH VIEW, STORING THE PATH AND COST
             combination = []
             self.generate_combination(cur_view_positions, 0, [], combination, [ITERATIONS])
             #TLDR THIS CREATES ALL COMBINATIONS OF VISITING DIFFERENT VIEWS FOR EACH OBSTACLE
             # E.G. A1,B2,C3 OR B3,A2,C1
+            origin = [items[0]]
             for c in combination: # ITERATES THROUGH EACH COMBINATION
                 visited_candidates = [0] # add the start state of the robot
-
+                
                 cur_index = 1 #THIS TRACKS THE INDEX OF EACH PARTICULAR VIEW IN THE ITEMS LIST
                 fixed_cost = 0 # the cost applying for the position taking obstacle pictures
                 for index, view_position in enumerate(cur_view_positions):
-                    visited_candidates.append(cur_index + c[index])
-                    fixed_cost += view_position[c[index]].penalty
+                    choice = c[index]
+                    if choice is None:
+                        # Skip unreachable obstacles
+                        cur_index += len(view_position)  # still advance index for next obstacle
+                        continue
+                    visited_candidates.append(cur_index + choice)
+                    fixed_cost += view_position[choice].penalty
                     cur_index += len(view_position)
 
                 cost_np = np.zeros((len(visited_candidates), len(visited_candidates)))
 
                 for s in range(len(visited_candidates) - 1):
                     for e in range(s + 1, len(visited_candidates)):
-                        u = items[visited_candidates[s]]
+                        u = items[visited_candidates[s]] #REMINDER ITEMS ARE DIFFERENT VIEWS
                         v = items[visited_candidates[e]]
                         if (u, v) in self.cost_table.keys():
                             cost_np[s][e] = self.cost_table[(u, v)]
                         else:
                             cost_np[s][e] = 1e9
-                        cost_np[e][s] = cost_np[s][e]
+                        if (v, u) in self.cost_table:
+                            cost_np[e][s] = self.cost_table[(v, u)]
+                        else:
+                            cost_np[e][s] = 1e9 
                 #TLDR THIS ADDS THE COST OF EACH PAIR OF OBJECTS E.G. A1 -> B2 OR C3-> A2
                 cost_np[:, 0] = 0
+                if np.any(cost_np == 1e9):
+                    continue
                 _permutation, _distance = solve_tsp_dynamic_programming(cost_np)
                 # print(f"fixed_cost = {fixed_cost}")
                 # print(f"distance = {_distance}")
@@ -253,8 +262,13 @@ class MazeSolver:
                     partial_path[-1].set_screenshot(to_item.screenshot_id)
                 if valid_combination:
                     optimal_path = partial_path
-            if optimal_path:
+
+            if optimal_path is not None and len(optimal_path) > 0 and optimal_path != origin:
                 break
+            
+        if optimal_path is None or len(optimal_path) == 0:
+            #SAFETYNET TO RETURN JUST START POINT IF SOMEHOW NILL LIST
+            optimal_path = [items[0]]
         return optimal_path, distance
 
     @staticmethod
@@ -267,10 +281,16 @@ class MazeSolver:
             return
 
         iteration_left[0] -= 1
-        for j in range(len(view_positions[index])):
-            current.append(j)
+        if not view_positions[index]:  # EMPTY list, skip this obstacle
+        # Append a placeholder (e.g., None) to maintain indexing
+            current.append(None)
             MazeSolver.generate_combination(view_positions, index + 1, current, result, iteration_left)
             current.pop()
+        else:
+            for j in range(len(view_positions[index])):
+                current.append(j)
+                MazeSolver.generate_combination(view_positions, index + 1, current, result, iteration_left)
+                current.pop()
 
     def get_safe_cost(self, x, y):
         """Get the safe cost of a particular x,y coordinate wrt obstacles that are exactly 2 units away from it in both x and y directions
@@ -350,7 +370,7 @@ class MazeSolver:
                         neighbors.append((x + bigger_changeR, y + smaller_changeR, md, safe_cost + 10))
 
                     # Check for valid position
-                    if self.grid.reachable(x - smaller_changeBL, y - bigger_changeBL, turn = True) and self.grid.reachable(x, y, preTurn = True,direction = direction):
+                    if self.grid.reachable(x - smaller_changeBL, y - bigger_changeBL, turn = True) and self.grid.reachable(x, y, preTurn = True,direction = direction,back=True):
                         # Get safe cost of destination
                         safe_cost = self.get_safe_cost(x - smaller_changeBL, y - bigger_changeBL)
                         neighbors.append((x - smaller_changeBL, y - bigger_changeBL, md, safe_cost + 10))
@@ -362,7 +382,7 @@ class MazeSolver:
                          #   print("adding this particular path, ", x+smaller_change, y+bigger_change, "from",x,y, "east to north")
                         neighbors.append((x + smaller_changeL, y + bigger_changeL, md, safe_cost + 10))
 
-                    if self.grid.reachable(x - bigger_changeBR, y - smaller_changeBR, turn = True) and self.grid.reachable(x, y, preTurn = True,direction = direction):
+                    if self.grid.reachable(x - bigger_changeBR, y - smaller_changeBR, turn = True) and self.grid.reachable(x, y, preTurn = True,direction = direction,back=True):
                         safe_cost = self.get_safe_cost(x - bigger_changeBR, y - smaller_changeBR)
                         neighbors.append((x - bigger_changeBR, y - smaller_changeBR, md, safe_cost + 10))
 
@@ -375,7 +395,7 @@ class MazeSolver:
                         #print("adding this particular path, ", x+smaller_change2, y-bigger_change2, "from",x,y, "east to south")
                         neighbors.append((x + smaller_changeR, y - bigger_changeR, md, safe_cost + 10))
 
-                    if self.grid.reachable(x - bigger_changeBL, y + smaller_changeBL, turn = True) and self.grid.reachable(x, y, preTurn = True,direction = direction):
+                    if self.grid.reachable(x - bigger_changeBL, y + smaller_changeBL, turn = True) and self.grid.reachable(x, y, preTurn = True,direction = direction,back=True):
                         safe_cost = self.get_safe_cost(x - bigger_changeBL, y + smaller_changeBL)
                         neighbors.append((x - bigger_changeBL, y + smaller_changeBL, md, safe_cost + 10))
 
@@ -386,7 +406,7 @@ class MazeSolver:
                         #print("adding this particular path, ", x+bigger_change, y-smaller_change, "from",x,y,"south to east")
                         neighbors.append((x + bigger_changeL, y - smaller_changeL, md, safe_cost + 10))
 
-                    if self.grid.reachable(x - smaller_changeBR, y + bigger_changeBR, turn = True) and self.grid.reachable(x, y, preTurn = True,direction = direction):
+                    if self.grid.reachable(x - smaller_changeBR, y + bigger_changeBR, turn = True) and self.grid.reachable(x, y, preTurn = True,direction = direction,back=True):
                         safe_cost = self.get_safe_cost(x - smaller_changeBR, y + bigger_changeBR)
                         neighbors.append((x - smaller_changeBR, y + bigger_changeBR, md, safe_cost + 10))
 
@@ -398,7 +418,7 @@ class MazeSolver:
                         #print("adding this particular path, ", x-bigger_change2, y-smaller_change2, "from",x,y,"south to west")
                         neighbors.append((x - bigger_changeR, y - smaller_changeR, md, safe_cost + 10))
 
-                    if self.grid.reachable(x + smaller_changeBL, y + bigger_changeBL, turn = True) and self.grid.reachable(x, y, preTurn = True,direction = direction):
+                    if self.grid.reachable(x + smaller_changeBL, y + bigger_changeBL, turn = True) and self.grid.reachable(x, y, preTurn = True,direction = direction,back=True):
                         safe_cost = self.get_safe_cost(x + smaller_changeBL, y + bigger_change)
                         neighbors.append((x + smaller_changeBL, y + bigger_changeBL, md, safe_cost + 10))
 
@@ -409,7 +429,7 @@ class MazeSolver:
                         #print("adding this particular path, ", x-smaller_change, y-bigger_change, "from",x,y,"west to south")
                         neighbors.append((x - smaller_changeL, y - bigger_changeL, md, safe_cost + 10))
 
-                    if self.grid.reachable(x + bigger_changeBR, y + smaller_changeBR, turn = True) and self.grid.reachable(x, y, preTurn = True,direction = direction):
+                    if self.grid.reachable(x + bigger_changeBR, y + smaller_changeBR, turn = True) and self.grid.reachable(x, y, preTurn = True,direction = direction,back=True):
                         safe_cost = self.get_safe_cost(x + bigger_changeBR, y + smaller_changeBR)
                         neighbors.append((x + bigger_changeBR, y + smaller_changeBR, md, safe_cost + 10))
 
@@ -421,7 +441,7 @@ class MazeSolver:
                         #print("adding this particular path, ", x-smaller_change2, y+bigger_change2, "from",x,y,"west to north")
                         neighbors.append((x - smaller_changeR, y + bigger_changeR, md, safe_cost + 10))
 
-                    if self.grid.reachable(x + bigger_changeBL, y - smaller_changeBL, turn = True) and self.grid.reachable(x, y, preTurn = True,direction = direction):
+                    if self.grid.reachable(x + bigger_changeBL, y - smaller_changeBL, turn = True) and self.grid.reachable(x, y, preTurn = True,direction = direction,back=True):
                         safe_cost = self.get_safe_cost(x + bigger_changeBL, y - smaller_changeBL)
                         neighbors.append((x + bigger_changeBL, y - smaller_changeBL, md, safe_cost + 10))
 
@@ -432,7 +452,7 @@ class MazeSolver:
                         #print("adding this particular path, ", x+smaller_change, y-bigger_change, "from",x,y,"north to west")
                         neighbors.append((x + smaller_changeL, y - bigger_changeL, md, safe_cost + 10))
 
-                    if self.grid.reachable(x + smaller_changeBR, y - bigger_changeBR, turn = True) and self.grid.reachable(x, y, preTurn = True,direction = direction):
+                    if self.grid.reachable(x + smaller_changeBR, y - bigger_changeBR, turn = True) and self.grid.reachable(x, y, preTurn = True,direction = direction,back=True):
                         safe_cost = self.get_safe_cost(x + smaller_changeBR, y - bigger_changeBR)
                         neighbors.append((x + smaller_changeBR, y - bigger_changeBR, md, safe_cost + 10))
 
