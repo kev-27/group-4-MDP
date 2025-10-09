@@ -523,6 +523,7 @@ class MazeSolver:
                 astar_search(states[i], states[j])
                 astar_search(states[j], states[i]) #CALCULATE REVERSE ASSYMETRIC PATH
                 #print(self.path_table[(states[i], states[j])])
+        print(self.get_neighbors(13,4,Direction.EAST))
        # for (u, v), path in self.path_table.items():
         #    if (u.x, u.y) == (11,8) or (v.x, v.y) == (11,8):
          #       print(f"Path {u} -> {v}:")

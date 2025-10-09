@@ -339,10 +339,9 @@ class Grid:
         Returns:
             bool: _description_
         """
-
+     
         if not self.is_valid_coord(x, y):
             return False
-        
         for ob in self.obstacles:
             # print(f"Looking at position x:{x} y:{y} against ob: {ob.x} {ob.y}")
             if ob.x == 4 and ob.y <= 4 and x < 4 and y < 4:
@@ -364,7 +363,7 @@ class Grid:
             if preTurn:
                 #TO FIND DIST FROM ROBOT TO OBSTACLE, ASSUMING OBSTACLE RIGHT IN FRONT
                 dist = max(abs(ob.x - x), abs(ob.y - y)) 
-                if dist< 5: #5 MEANS 3 GRID SPACE BETW OBST. AND ROBOT           
+                if dist< 5: #5 MEANS 3 GRID SPACE BETW OBST. AND ROBOT         
                     if direction == Direction.NORTH and ob.y > y and abs(ob.x - x) < 3:
                         return False
                     elif direction == Direction.SOUTH and ob.y < y and abs(ob.x - x) < 3:
@@ -383,8 +382,8 @@ class Grid:
                     #     print(f"ob.x: {ob.x} ob.y: {ob.y} x: {x} y:{y} Triggered less than 3 max units trap")
                     return False
 
-            
-            return True
+           
+        return True
 
     def is_valid_coord(self, x: int, y: int) -> bool:
         """Checks if given position is within bounds
