@@ -334,7 +334,7 @@ class MazeSolver:
                 smaller_changeL = 2
                 bigger_changeR = 4 #right turn
                 smaller_changeR = 3
-                bigger_changeBL = 4 #y coord
+                bigger_changeBL = 3 #y coord
                 smaller_changeBL = 3
                 bigger_changeBR = 4 #y coord
                 smaller_changeBR = 3
@@ -350,7 +350,7 @@ class MazeSolver:
                         neighbors.append((x + bigger_changeR, y + smaller_changeR, md, safe_cost + 10))
 
                     # Check for valid position
-                    if self.grid.reachable(x - smaller_changeBL, y - bigger_changeBL, turn = True) and self.grid.reachable(x, y, preTurn = True,direction = direction,back =True):
+                    if self.grid.reachable(x - smaller_changeBL, y - bigger_changeBL, turn = True) and self.grid.reachable(x, y, preTurn = True,direction = direction):
                         # Get safe cost of destination
                         safe_cost = self.get_safe_cost(x - smaller_changeBL, y - bigger_changeBL)
                         neighbors.append((x - smaller_changeBL, y - bigger_changeBL, md, safe_cost + 10))
@@ -362,7 +362,7 @@ class MazeSolver:
                          #   print("adding this particular path, ", x+smaller_change, y+bigger_change, "from",x,y, "east to north")
                         neighbors.append((x + smaller_changeL, y + bigger_changeL, md, safe_cost + 10))
 
-                    if self.grid.reachable(x - bigger_changeBR, y - smaller_changeBR, turn = True) and self.grid.reachable(x, y, preTurn = True,direction = direction,back =True):
+                    if self.grid.reachable(x - bigger_changeBR, y - smaller_changeBR, turn = True) and self.grid.reachable(x, y, preTurn = True,direction = direction):
                         safe_cost = self.get_safe_cost(x - bigger_changeBR, y - smaller_changeBR)
                         neighbors.append((x - bigger_changeBR, y - smaller_changeBR, md, safe_cost + 10))
 
@@ -375,7 +375,7 @@ class MazeSolver:
                         #print("adding this particular path, ", x+smaller_change2, y-bigger_change2, "from",x,y, "east to south")
                         neighbors.append((x + smaller_changeR, y - bigger_changeR, md, safe_cost + 10))
 
-                    if self.grid.reachable(x - bigger_changeBL, y + smaller_changeBL, turn = True) and self.grid.reachable(x, y, preTurn = True,direction = direction,back =True):
+                    if self.grid.reachable(x - bigger_changeBL, y + smaller_changeBL, turn = True) and self.grid.reachable(x, y, preTurn = True,direction = direction):
                         safe_cost = self.get_safe_cost(x - bigger_changeBL, y + smaller_changeBL)
                         neighbors.append((x - bigger_changeBL, y + smaller_changeBL, md, safe_cost + 10))
 
@@ -386,7 +386,7 @@ class MazeSolver:
                         #print("adding this particular path, ", x+bigger_change, y-smaller_change, "from",x,y,"south to east")
                         neighbors.append((x + bigger_changeL, y - smaller_changeL, md, safe_cost + 10))
 
-                    if self.grid.reachable(x - smaller_changeBR, y + bigger_changeBR, turn = True) and self.grid.reachable(x, y, preTurn = True,direction = direction,back =True):
+                    if self.grid.reachable(x - smaller_changeBR, y + bigger_changeBR, turn = True) and self.grid.reachable(x, y, preTurn = True,direction = direction):
                         safe_cost = self.get_safe_cost(x - smaller_changeBR, y + bigger_changeBR)
                         neighbors.append((x - smaller_changeBR, y + bigger_changeBR, md, safe_cost + 10))
 
@@ -398,7 +398,7 @@ class MazeSolver:
                         #print("adding this particular path, ", x-bigger_change2, y-smaller_change2, "from",x,y,"south to west")
                         neighbors.append((x - bigger_changeR, y - smaller_changeR, md, safe_cost + 10))
 
-                    if self.grid.reachable(x + smaller_changeBL, y + bigger_changeBL, turn = True) and self.grid.reachable(x, y, preTurn = True,direction = direction,back =True):
+                    if self.grid.reachable(x + smaller_changeBL, y + bigger_changeBL, turn = True) and self.grid.reachable(x, y, preTurn = True,direction = direction):
                         safe_cost = self.get_safe_cost(x + smaller_changeBL, y + bigger_change)
                         neighbors.append((x + smaller_changeBL, y + bigger_changeBL, md, safe_cost + 10))
 
@@ -409,7 +409,7 @@ class MazeSolver:
                         #print("adding this particular path, ", x-smaller_change, y-bigger_change, "from",x,y,"west to south")
                         neighbors.append((x - smaller_changeL, y - bigger_changeL, md, safe_cost + 10))
 
-                    if self.grid.reachable(x + bigger_changeBR, y + smaller_changeBR, turn = True) and self.grid.reachable(x, y, preTurn = True,direction = direction,back =True):
+                    if self.grid.reachable(x + bigger_changeBR, y + smaller_changeBR, turn = True) and self.grid.reachable(x, y, preTurn = True,direction = direction):
                         safe_cost = self.get_safe_cost(x + bigger_changeBR, y + smaller_changeBR)
                         neighbors.append((x + bigger_changeBR, y + smaller_changeBR, md, safe_cost + 10))
 
@@ -421,7 +421,7 @@ class MazeSolver:
                         #print("adding this particular path, ", x-smaller_change2, y+bigger_change2, "from",x,y,"west to north")
                         neighbors.append((x - smaller_changeR, y + bigger_changeR, md, safe_cost + 10))
 
-                    if self.grid.reachable(x + bigger_changeBL, y - smaller_changeBL, turn = True) and self.grid.reachable(x, y, preTurn = True,direction = direction,back =True):
+                    if self.grid.reachable(x + bigger_changeBL, y - smaller_changeBL, turn = True) and self.grid.reachable(x, y, preTurn = True,direction = direction):
                         safe_cost = self.get_safe_cost(x + bigger_changeBL, y - smaller_changeBL)
                         neighbors.append((x + bigger_changeBL, y - smaller_changeBL, md, safe_cost + 10))
 
@@ -432,7 +432,7 @@ class MazeSolver:
                         #print("adding this particular path, ", x+smaller_change, y-bigger_change, "from",x,y,"north to west")
                         neighbors.append((x + smaller_changeL, y - bigger_changeL, md, safe_cost + 10))
 
-                    if self.grid.reachable(x + smaller_changeBR, y - bigger_changeBR, turn = True) and self.grid.reachable(x, y, preTurn = True,direction = direction,back =True):
+                    if self.grid.reachable(x + smaller_changeBR, y - bigger_changeBR, turn = True) and self.grid.reachable(x, y, preTurn = True,direction = direction):
                         safe_cost = self.get_safe_cost(x + smaller_changeBR, y - bigger_changeBR)
                         neighbors.append((x + smaller_changeBR, y - bigger_changeBR, md, safe_cost + 10))
 
