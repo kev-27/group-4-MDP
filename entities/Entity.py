@@ -364,15 +364,15 @@ class Grid:
                 #TO FIND DIST FROM ROBOT TO OBSTACLE, ASSUMING OBSTACLE RIGHT IN FRONT
                 dist = max(abs(ob.x - x), abs(ob.y - y)) 
                 if dist< 5: #5 MEANS 3 GRID SPACE BETW OBST. AND ROBOT         
-                    if direction == Direction.NORTH and ob.y > y and abs(ob.x - x) < 3:
+                    if direction == Direction.NORTH and ((ob.y > y and abs(ob.x - x) < 3) or (ob.y < y and abs(ob.x - x) < 3)) :
                         return False
-                    elif direction == Direction.SOUTH and ob.y < y and abs(ob.x - x) < 3:
+                    elif direction == Direction.SOUTH and ((ob.y < y and abs(ob.x - x) < 3) or (ob.y > y and abs(ob.x - x) < 3)) :
                         return False
-                    elif direction == Direction.EAST and ob.x > x and abs(ob.y - y) < 3:
+                    elif direction == Direction.EAST and ((ob.x > x and abs(ob.y - y) < 3)or(ob.x < x and abs(ob.y - y) < 3)):
                        # print("Inside preturn loop\n")
                         #print(ob.x,ob.y)
                         return False
-                    elif direction == Direction.WEST and ob.x < x and abs(ob.y - y) < 3:
+                    elif direction == Direction.WEST and ((ob.x < x and abs(ob.y - y) < 3)or(ob.x >x and abs(ob.y - y) < 3)):
                         return False
                     else:
                         continue #CURRENT OBJECT IS SAFE
