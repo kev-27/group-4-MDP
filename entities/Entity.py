@@ -327,7 +327,7 @@ class Grid:
         """
         return self.obstacles
 
-    def reachable(self, x: int, y: int,  turn=False, preTurn=False,direction =None) -> bool:
+    def reachable(self, x: int, y: int,  turn=False, preTurn=False,direction =None,back=False) -> bool:
         """Checks whether the given x,y coordinate is reachable/safe. Criterion is as such:
         - Must be at least 4 units away in total (x+y) from the obstacle
         - Greater distance (x or y distance) must be at least 3 units away from obstacle
@@ -375,7 +375,7 @@ class Grid:
                     elif direction == Direction.WEST and ((ob.x < x and abs(ob.y - y) < 3)or(ob.x >x and abs(ob.y - y) < 3)):
                         return False
                     else:
-                        continue #CURRENT OBJECT IS SAFE
+                        continue 
             else:
                 if max(abs(ob.x - x), abs(ob.y - y)) < EXPANDED_CELL * 2 + 1:
                     # if ob.x == 0 and ob.y == 10 and x == 1 and y == 12:
