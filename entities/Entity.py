@@ -377,15 +377,14 @@ class Grid:
                         return False
                     else:
                         continue #CURRENT OBJECT IS SAFE
-            if abs(ob.x - x) + abs(ob.y - y) >= 4:
-                # print(f"ob.x: {ob.x} ob.y: {ob.y} x: {x} y:{y} Triggered more than 3 units bypass")
-                continue
-            else: #IF GOING STRAIGHT , JUST SEE IF ANY OBSTACLE IS RIGHT BESIDE THE ROBOT'S EDGE
-                if max(abs(ob.x - x), abs(ob.y - y)) < 3:
-                    # print(f"ob.x: {ob.x} ob.y: {ob.y} x: {x} y:{y} Triggered less than 3 max units trap")
+            else:
+                if max(abs(ob.x - x), abs(ob.y - y)) < EXPANDED_CELL * 2 + 1:
+                    # if ob.x == 0 and ob.y == 10 and x == 1 and y == 12:
+                    #     print(f"ob.x: {ob.x} ob.y: {ob.y} x: {x} y:{y} Triggered less than 3 max units trap")
                     return False
 
-        return True
+            
+            return True
 
     def is_valid_coord(self, x: int, y: int) -> bool:
         """Checks if given position is within bounds

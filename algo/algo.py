@@ -84,11 +84,11 @@ class MazeSolver:
             # Match front cell to an obstacle coordinate
             for ob in self.grid.obstacles:
                 if ob.x == ox and ob.y == oy:
-                    key = (ob.id, ox, oy)
-                    if key not in seen_coords and ob.id not in seen_ids:
-                        order.append((ob.id, ox, oy))
+                    key = (ob.obstacle_id, ox, oy)
+                    if key not in seen_coords and ob.obstacle_id not in seen_ids:
+                        order.append((ob.obstacle_id, ox, oy))
                         seen_coords.add(key)
-                        seen_ids.add(ob.id)
+                        seen_ids.add(ob.obstacle_id)
                     break
 
         return order  # e.g. [(3, 5, 9), (7, 12, 2), ...]
@@ -200,8 +200,6 @@ class MazeSolver:
                     #print("obstacle: {}\n".format(self.grid.obstacles[idx]))
 
             # Generate the path cost for the items
-            self.path_table.clear()
-            self.cost_table.clear()
             self.path_cost_generator(items) #COMPUTES AND STORES ALL PAIR DISTANCES FROM ROBOT START TO EACH VIEW, STORING THE PATH AND COST
             combination = []
             self.generate_combination(cur_view_positions, 0, [], combination, [ITERATIONS])
@@ -236,21 +234,26 @@ class MazeSolver:
                 if _distance + fixed_cost >= distance:
                     continue
 
+                valid_combination = True
                 optimal_path = [items[0]]
+                partial_path = [items[0]]
                 distance = _distance + fixed_cost
                 #START FROM ROBOT'S STATE NODE , THEN ADD THE OBSTACLES IN ORDER
                 for i in range(len(_permutation) - 1):
                     from_item = items[visited_candidates[_permutation[i]]]
                     to_item = items[visited_candidates[_permutation[i + 1]]]
-                 
+                    if (from_item, to_item) not in self.path_table or self.path_table[(from_item, to_item)] == 0:
+                        valid_combination = False
+                        break
                     cur_path = self.path_table[(from_item, to_item)]
                     #print(cur_path)
                     for j in range(1, len(cur_path)): #ADD EACH OBSTACLES X,Y,DIRECTION TO PATH
-                        optimal_path.append(CellState(cur_path[j][0], cur_path[j][1], cur_path[j][2]))
+                        partial_path.append(CellState(cur_path[j][0], cur_path[j][1], cur_path[j][2]))
 
-                    optimal_path[-1].set_screenshot(to_item.screenshot_id)
+                    partial_path[-1].set_screenshot(to_item.screenshot_id)
+                if valid_combination:
+                    optimal_path = partial_path
             if optimal_path:
-                # if found optimal path, return, this returns first found optimal path
                 break
         return optimal_path, distance
 
@@ -351,8 +354,8 @@ class MazeSolver:
                 if direction == Direction.EAST and md == Direction.NORTH:
                     if self.grid.reachable(x + smaller_change, y + bigger_change, turn = True) and self.grid.reachable(x, y, preTurn = True,direction = direction):
                         safe_cost = self.get_safe_cost(x + smaller_change, y + bigger_change)
-                        if x==11 and y==8:
-                            print("adding this particular path, ", x+smaller_change, y+bigger_change, "from",x,y, "east to north")
+                        #if x==11 and y==8:
+                         #   print("adding this particular path, ", x+smaller_change, y+bigger_change, "from",x,y, "east to north")
                         neighbors.append((x + smaller_change, y + bigger_change, md, safe_cost + 10))
 
                     if self.grid.reachable(x - bigger_change, y - smaller_change, turn = True) and self.grid.reachable(x, y, preTurn = True,direction = direction):
