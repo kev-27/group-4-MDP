@@ -10,18 +10,24 @@ import requests
 from communication.android import AndroidLink, AndroidMessage
 from communication.stm32 import STMLink
 from logger.logger import logger
-from settings import IMG_API_IP, IMG_API_PORT, ALGO_API_IP, ALGO_API_PORT
+from settings import IMG_API_IP, IMG_API_PORT
 import sys
 
 LEFT_ARROW = 39
 RIGHT_ARROW = 38
-BULLSEYE = -1
-FAILED = -999
+FAILED = -1
+MV_TO_SNAP_ARROW_1 = "CMD123"
+MV_TO_SNAP_ARROW_2 = "CMD123"
+NAVIGATE_ARD_OBS_2_L = "CMD123"
+NAVIGATE_ARD_OBS_2_R = "CMD123"
+NAVIGATE_ARD_OBS_1_L = "C00000"
+NAVIGATE_ARD_OBS_1_R = "C00000"
+WALL_HUG = "CMD123"
+PARK_CAR = "CMD123"
 
 marker_map = {
     LEFT_ARROW: "left",
     RIGHT_ARROW: "right",
-    BULLSEYE: "bullesye",
     FAILED: "failed",
 }
 
@@ -51,62 +57,42 @@ class PiAction:
 
 
 class RaspberryPi:
-    """
-    Class that defines how rpi handles communication between other components.
-
-    It contains many large monolithic methods that may require refactoring if time permits
-
-    Divide the following tasks into parallel processes:
-    - listen msg from android
-    - send msg to android
-    - listen msg from stm
-    - process movement command
-    - process actions for image rec: snap an image
-    """
 
     def __init__(self):
         """
         Initialises the Raspberry Pi and multiprocessing Environment.
         """
 
+        self.dist_car_to_arrow_1 = (
+            20  # distance between first arrow and where car will stop.
+        )
+        self.dist_car_to_arrow_2 = (
+            20  # distance between second arrow and where car will stop.
+        )
+        self.dist_carpark_to_obs_1 = (
+            None  # distance between carpark and first obstacle.
+        )
+        self.dist_carpark_to_obs_2 = (
+            None  # distance between carpark and second obstacle.
+        )
+        self.wall_dist = None  # distance driven to face wall after second obstacle.
+        self.wall_complete = False  # signal wall has been tracked.
+        self.obstacle2_length_half = None  # length of obstacle.
+
+        self.arrow_1 = None
+        self.arrow_2 = None
+
         # ======= init env ========
         self.logger = logger
         self.android_link = AndroidLink()
         self.stm_link = STMLink()
-        # =============================
-
-        # ========== multi-processing env ==================
-
-        # Managers provide a way to create data which can be shared between
-        # different processes. A manager object controls a
-        # server process which manages shared objects. Other processes can
-        # access the shared objects by using proxies.
-
         self.manager = Manager()  # manages shared resources
-
         self.android_dropped = self.manager.Event()  # if android disconnects
-
         self.unpause = self.manager.Event()
-
-        # self.movement_lock = self.manager.Lock()
         self.movement_lock = self.manager.Lock()
-
         self.android_queue = self.manager.Queue()  # Messages to send to Android
-
-        # Messages that need to be processed by RPi
         self.rpi_action_queue = self.manager.Queue()
-
-        # Messages that need to be processed by STM32, as well as snap commands
         self.command_queue = self.manager.Queue()
-
-        # X,Y,D coordinates of the robot after execution of a command
-        # D: direction
-        #
-        #        NORTH - UP - 0
-        #        EAST - RIGHT - 2
-        #        SOUTH - DOWN - 4
-        #        WEST - LEFT 6
-
         self.path_queue = self.manager.Queue()
         # ======================================================
 
@@ -204,6 +190,70 @@ class RaspberryPi:
 
             self.android_dropped.clear()
 
+    def track_distance(self):
+        self.command_queue.put("")
+        return
+
+    def mv_to_snap_arrow_1(self):
+        self.logger.info("Moving forward to capture arrow 1.")
+        self.command_queue.put(MV_TO_SNAP_ARROW_1)
+        self.arrow_1 = self.snap_and_rec("small")
+        self.logger.info(f"First arrow is {marker_map.get(self.arrow_1)}")
+
+    def mv_to_snap_arrow_2(self):
+        self.logger.info("Moving forward to capture arrow 2.")
+        self.command_queue.put(MV_TO_SNAP_ARROW_2)
+        self.arrow_2 = self.snap_and_rec("big")
+        self.logger.info(f"Second arrow is {marker_map.get(self.arrow_2)}")
+
+    def navigate_obs_1(self, dir):
+        if dir == LEFT_ARROW:
+            self.logger.info("navigate around obstacle 1, left")
+            self.command_queue.put(NAVIGATE_ARD_OBS_1_L)
+        elif dir == RIGHT_ARROW:
+            self.logger.info("navigate around obstacle 1, right")
+            self.command_queue.put(NAVIGATE_ARD_OBS_1_R)
+        else:
+            self.logger.error(
+                "Failed to detect obstacle 1! Trying random direction to save the run:"
+            )
+            self.command_queue.put("FIN")
+        return
+
+    def navigate_obs_2(self, dir):
+        if dir == LEFT_ARROW:
+            self.logger.info("navigate around obstacle 2, left")
+            self.command_queue.put(NAVIGATE_ARD_OBS_2_L)
+        elif dir == RIGHT_ARROW:
+            self.logger.info("navigate around obstacle 2, right")
+            self.command_queue.put(NAVIGATE_ARD_OBS_2_R)
+        else:
+            self.logger.error("Failed to detect obstacle 1! Aborting.")
+            self.command_queue.put("FIN")
+        return
+
+    def park_car(self):
+        return
+
+    # ============= main ==============
+    def exec_task2(self):
+        self.mv_to_snap_arrow_1()
+        self.navigate_obs_1(self.arrow_1)
+        self.mv_to_snap_arrow_2()
+        self.navigate_obs_2(self.arrow_2)
+        self.park_car()
+        self.command_queue.put("FIN")
+        return
+
+    # =================================
+
+    def exec_test(self):
+        self.logger.info(f"Running test")
+        self.android_queue.put(AndroidMessage("status", "running"))
+        self.command_queue.put("")
+        self.command_queue.put("FIN")
+        return
+
     def recv_android(self) -> None:
         """
         [Child Process] Processes the messages received from Android
@@ -238,24 +288,19 @@ class RaspberryPi:
                 if message["value"] == "start":
 
                     if not self.check_api():
-                        self.logger.error(
-                            "Image / Algo API is down! Start command aborted."
-                        )
+                        self.logger.error("Image API is down! Start command aborted.")
                         self.android_queue.put(
                             AndroidMessage(
                                 "error",
-                                "Image / Algo API is down, start command aborted.",
+                                "Image API is down, start command aborted.",
                             )
                         )
                         continue
 
-                    obs1_first_marker = self.snap_and_rec("small")
-                    self.logger.info(
-                        f"Small obstacle first manouver is {marker_map.get(obs1_first_marker)}"
-                    )
-
                     self.logger.info("Start command received, starting robot.")
                     self.android_queue.put(AndroidMessage("status", "running"))
+                    self.exec_test()
+                    # self.exec_task2()
                     self.unpause.set()
 
     def recv_stm(self) -> None:
@@ -267,11 +312,8 @@ class RaspberryPi:
             self.logger.debug(f"Received {message}")
             if not message:
                 continue
-
             if message.startswith("DONE"):
                 self.logger.debug("Acknowledgement 'DONE' from STM32 received.")
-
-                # Release the movement lock safely
                 try:
                     self.movement_lock.release()
                     self.logger.debug("movement_lock released (STM DONE).")
@@ -279,7 +321,6 @@ class RaspberryPi:
                     self.logger.warning(
                         "movement_lock was already released — ignoring duplicate DONE."
                     )
-
             else:
                 self.logger.warning(f"Ignored unknown message from STM: {message}")
 
@@ -289,37 +330,21 @@ class RaspberryPi:
         """
         while True:
             try:
-                # Retrieve message from message queue
-                message: AndroidMessage = self.android_queue.get(
-                    timeout=0.5
-                )  # blocking, up to 0.5 seconds
+                message: AndroidMessage = self.android_queue.get(timeout=0.5)
             except queue.Empty:
                 continue
 
             try:
-                self.android_link.send(message)  # sends message to android
+                self.android_link.send(message)
             except OSError:
-                self.android_dropped.set()  # check for disconnect
+                self.android_dropped.set()
                 self.logger.debug("Event set: Android dropped")
 
     def command_follower(self) -> None:
-        """
-        [Child Process] processes commands in command_queue.
-
-        Three types of commands:
-        - movement commands to send to STM32
-        - "snapping" an image
-        - finish command signaling completion of path
-        """
         while True:
-            # Retrieve next movement command
             command: str = self.command_queue.get()
-
-            # Wait until start/unpause signal
             self.logger.debug("Waiting for unpause signal...")
             self.unpause.wait()
-
-            # Acquire lock before sending command to STM32
             self.logger.debug("Acquiring movement_lock before sending command...")
             self.movement_lock.acquire()
 
@@ -338,30 +363,22 @@ class RaspberryPi:
                 "P",
             )
             if command.startswith(stm32_prefixes) and not command.startswith("SNAP"):
-                # recv_stm is running as an independent child process
                 self.stm_link.send(command)
                 self.logger.debug(f"Sending to STM32: {command}")
                 self.logger.info("Waiting for STM32 ack to release movement lock...")
-
-            # Snap command releases lock once its done
             elif command.startswith("SNAP"):
                 obstacle_id_with_signal = command.replace("SNAP", "")
                 self.rpi_action_queue.put(
                     PiAction(cat="snap", value=obstacle_id_with_signal)
                 )
-
-            # End of path
             elif command == "FIN":
-
                 self.unpause.clear()
                 self.movement_lock.release()
-
                 self.logger.info("Commands queue finished.")
                 self.android_queue.put(
                     AndroidMessage("info", "Commands queue finished.")
                 )
                 self.android_queue.put(AndroidMessage("status", "finished"))
-
             else:
                 raise Exception(f"Unknown command: {command}")
 
@@ -384,7 +401,7 @@ class RaspberryPi:
         """
 
         predicted_id = FAILED
-        valid_markers = {BULLSEYE, LEFT_ARROW, RIGHT_ARROW}
+        valid_markers = {LEFT_ARROW, RIGHT_ARROW}
 
         try:
             self.logger.info(f"Capturing image for obstacle: {name}")
@@ -408,7 +425,7 @@ class RaspberryPi:
 
             if results:
                 try:
-                    predicted_id = int(results.get("predicted_id", -999))
+                    predicted_id = int(results.get("predicted_id", FAILED))
                 except (KeyError, ValueError) as e:
                     self.logger.error(f"Malformed response from API: {results} - {e}")
                     predicted_id = FAILED
