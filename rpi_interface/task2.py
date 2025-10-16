@@ -344,7 +344,6 @@ class RaspberryPi:
     def command_follower(self) -> None:
         while True:
             command: str = self.command_queue.get()
-            self.logger.debug("Waiting for unpause signal...")
             self.logger.debug("Acquiring movement_lock before sending command...")
             self.movement_lock.acquire()
 
