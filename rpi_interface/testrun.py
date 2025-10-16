@@ -379,7 +379,6 @@ class RaspberryPi:
             stm32_prefixes = (
                 "A",
                 "C",
-                "R",
                 "W",
                 "S",
                 "D",

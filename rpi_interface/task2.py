@@ -16,8 +16,8 @@ import sys
 LEFT_ARROW = 39
 RIGHT_ARROW = 38
 FAILED = -1
-MV_TO_SNAP_ARROW_1 = "E0000"
-MV_TO_SNAP_ARROW_2 = "E0000"
+MV_TO_SNAP_ARROW_1 = "E0035"
+MV_TO_SNAP_ARROW_2 = "E0035"
 NAVIGATE_ARD_OBS_2_L = "CMD12"
 NAVIGATE_ARD_OBS_2_R = "CMD12"
 NAVIGATE_ARD_OBS_1_L = "Z0000"
@@ -198,6 +198,7 @@ class RaspberryPi:
         self.logger.info("Moving forward to capture arrow 1.")
         self.command_queue.put(MV_TO_SNAP_ARROW_1)
         self.movement_lock.acquire()
+        self.movement_lock.release()
         self.arrow_1 = self.snap_and_rec("small")
         try:
             self.movement_lock.release()
@@ -212,15 +213,15 @@ class RaspberryPi:
         self.logger.info("Moving forward to capture arrow 2.")
         self.command_queue.put(MV_TO_SNAP_ARROW_2)
         self.movement_lock.acquire()
-        self.arrow_2 = self.snap_and_rec("big")
-        try:
-            self.movement_lock.release()
-            self.logger.debug("movement_lock released (STM DONE).")
-        except Exception:
-            self.logger.warning(
-                "movement_lock was already released — ignoring duplicate DONE."
-            )
-        self.logger.info(f"Second arrow is {marker_map.get(self.arrow_2)}")
+        # self.arrow_2 = self.snap_and_rec("big")
+        # try:
+            # self.movement_lock.release()
+            # self.logger.debug("movement_lock released (STM DONE).")
+        # except Exception:
+            # self.logger.warning(
+                # "movement_lock was already released — ignoring duplicate DONE."
+           #  )
+        # self.logger.info(f"Second arrow is {marker_map.get(self.arrow_2)}")
 
     def navigate_obs_1(self, dir):
         if dir == LEFT_ARROW:
