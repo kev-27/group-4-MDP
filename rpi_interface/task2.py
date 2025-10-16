@@ -197,13 +197,29 @@ class RaspberryPi:
     def mv_to_snap_arrow_1(self):
         self.logger.info("Moving forward to capture arrow 1.")
         self.command_queue.put(MV_TO_SNAP_ARROW_1)
+        self.movement_lock.acquire()
         self.arrow_1 = self.snap_and_rec("small")
+        try:
+            self.movement_lock.release()
+            self.logger.debug("movement_lock released (STM DONE).")
+        except Exception:
+            self.logger.warning(
+                "movement_lock was already released — ignoring duplicate DONE."
+            )
         self.logger.info(f"First arrow is {marker_map.get(self.arrow_1)}")
 
     def mv_to_snap_arrow_2(self):
         self.logger.info("Moving forward to capture arrow 2.")
         self.command_queue.put(MV_TO_SNAP_ARROW_2)
+        self.movement_lock.acquire()
         self.arrow_2 = self.snap_and_rec("big")
+        try:
+            self.movement_lock.release()
+            self.logger.debug("movement_lock released (STM DONE).")
+        except Exception:
+            self.logger.warning(
+                "movement_lock was already released — ignoring duplicate DONE."
+            )
         self.logger.info(f"Second arrow is {marker_map.get(self.arrow_2)}")
 
     def navigate_obs_1(self, dir):
@@ -360,7 +376,7 @@ class RaspberryPi:
                 "D",
                 "Z",  # obs 1 left
                 "Q",
-                "E",
+                "E",  # move forward until
                 "X",
                 "P",
             )
