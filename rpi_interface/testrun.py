@@ -403,7 +403,6 @@ class RaspberryPi:
 
             # End of path
             elif command == "FIN":
-
                 self.unpause.clear()
                 self.obstacles.clear()
                 self.movement_lock.release()

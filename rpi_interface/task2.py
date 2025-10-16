@@ -18,8 +18,8 @@ RIGHT_ARROW = 38
 FAILED = -1
 MV_TO_SNAP_ARROW_1 = "E0035"
 MV_TO_SNAP_ARROW_2 = "E0035"
-NAVIGATE_ARD_OBS_2_L = "CMD12"
-NAVIGATE_ARD_OBS_2_R = "CMD12"
+NAVIGATE_ARD_OBS_2_L = "X1234"
+NAVIGATE_ARD_OBS_2_R = "Q1234"
 NAVIGATE_ARD_OBS_1_L = "Z0000"
 NAVIGATE_ARD_OBS_1_R = "C0000"
 WALL_HUG = "CMD12"
@@ -57,7 +57,6 @@ class PiAction:
 
 
 class RaspberryPi:
-
     def __init__(self):
         """
         Initialises the Raspberry Pi and multiprocessing Environment.
@@ -201,13 +200,13 @@ class RaspberryPi:
     def mv_to_snap_arrow_2(self):
         self.logger.info("Moving forward to capture arrow 2.")
         self.command_queue.put(MV_TO_SNAP_ARROW_2)
-        
+        self.command_queue.put("SNAP_big")
+
     def navigate_obs_1(self):
-        self.logger.info(f'inside last arrow: {self.shared["last_arrow"]}')
-        if self.shared["last_arrow"]  == LEFT_ARROW:
+        if self.shared["last_arrow"] == LEFT_ARROW:
             self.logger.info("navigate around obstacle 1, left")
             self.command_queue.put(NAVIGATE_ARD_OBS_1_L)
-        elif self.shared["last_arrow"]  == RIGHT_ARROW:
+        elif self.shared["last_arrow"] == RIGHT_ARROW:
             self.logger.info("navigate around obstacle 1, right")
             self.command_queue.put(NAVIGATE_ARD_OBS_1_R)
         else:
@@ -218,14 +217,14 @@ class RaspberryPi:
         return
 
     def navigate_obs_2(self):
-        if self.shared["last_arrow"]  == LEFT_ARROW:
+        if self.shared["last_arrow"] == LEFT_ARROW:
             self.logger.info("navigate around obstacle 2, left")
             self.command_queue.put(NAVIGATE_ARD_OBS_2_L)
-        elif self.shared["last_arrow"]  == RIGHT_ARROW:
+        elif self.shared["last_arrow"] == RIGHT_ARROW:
             self.logger.info("navigate around obstacle 2, right")
             self.command_queue.put(NAVIGATE_ARD_OBS_2_R)
         else:
-            self.logger.error("Failed to detect obstacle 1! Aborting.")
+            self.logger.error("Failed to detect obstacle 2! Aborting.")
             self.command_queue.put("FIN")
         return
 
@@ -252,6 +251,9 @@ class RaspberryPi:
         self.snap_done.clear()
         self.navigate_obs_1()
         self.mv_to_snap_arrow_2()
+        self.snap_done.wait()  # block until snap done
+        self.snap_done.clear()
+        self.navigate_obs_2()
         self.command_queue.put("FIN")
         return
 
@@ -287,7 +289,6 @@ class RaspberryPi:
 
             if message["cat"] == "control":
                 if message["value"] == "start":
-
                     if not self.check_api():
                         self.logger.error("Image API is down! Start command aborted.")
                         self.android_queue.put(
@@ -422,8 +423,9 @@ class RaspberryPi:
                 return FAILED
 
             if results:
+                self.logger.debug(f"{results}")
                 try:
-                    predicted_id = int(results.get("image_id"))
+                    predicted_id = int(results.get("predicted_id"))
                 except (KeyError, ValueError) as e:
                     self.logger.error(f"Malformed response from API: {results} - {e}")
                     predicted_id = FAILED
@@ -450,7 +452,9 @@ class RaspberryPi:
                 self.logger.warning("Lock already released")
 
         self.shared["last_arrow"] = predicted_id
-        self.logger.info(f"Updated last_arrow to {marker_map.get(self.shared['last_arrow'])}")
+        self.logger.info(
+            f"Updated last_arrow to {marker_map.get(self.shared['last_arrow'])}"
+        )
         self.snap_done.set()
         return predicted_id
 
