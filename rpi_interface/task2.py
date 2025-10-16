@@ -16,14 +16,14 @@ import sys
 LEFT_ARROW = 39
 RIGHT_ARROW = 38
 FAILED = -1
-MV_TO_SNAP_ARROW_1 = "CMD123"
-MV_TO_SNAP_ARROW_2 = "CMD123"
-NAVIGATE_ARD_OBS_2_L = "CMD123"
-NAVIGATE_ARD_OBS_2_R = "CMD123"
-NAVIGATE_ARD_OBS_1_L = "C00000"
-NAVIGATE_ARD_OBS_1_R = "C00000"
-WALL_HUG = "CMD123"
-PARK_CAR = "CMD123"
+MV_TO_SNAP_ARROW_1 = "E0000"
+MV_TO_SNAP_ARROW_2 = "E0000"
+NAVIGATE_ARD_OBS_2_L = "CMD12"
+NAVIGATE_ARD_OBS_2_R = "CMD12"
+NAVIGATE_ARD_OBS_1_L = "Z0000"
+NAVIGATE_ARD_OBS_1_R = "C0000"
+WALL_HUG = "CMD12"
+PARK_CAR = "CMD12"
 
 marker_map = {
     LEFT_ARROW: "left",
@@ -250,7 +250,9 @@ class RaspberryPi:
     def exec_test(self):
         self.logger.info(f"Running test")
         self.android_queue.put(AndroidMessage("status", "running"))
-        self.command_queue.put("")
+        self.mv_to_snap_arrow_1()
+        self.navigate_obs_1(self.arrow_1)
+        self.mv_to_snap_arrow_2()
         self.command_queue.put("FIN")
         return
 
@@ -351,12 +353,12 @@ class RaspberryPi:
             # STM32 Commands - Send straight to STM32
             stm32_prefixes = (
                 "A",
-                "C",
+                "C",  # obs 1 right
                 "R",
                 "W",
                 "S",
                 "D",
-                "Z",
+                "Z",  # obs 1 left
                 "Q",
                 "E",
                 "X",
