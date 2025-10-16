@@ -79,13 +79,13 @@ class RaspberryPi:
         self.wall_complete = False  # signal wall has been tracked.
         self.obstacle2_length_half = None  # length of obstacle.
 
-        self.last_arrow = None
-
         # ======= init env ========
         self.logger = logger
         self.android_link = AndroidLink()
         self.stm_link = STMLink()
         self.manager = Manager()  # manages shared resources
+        self.shared = self.manager.dict()
+        self.shared["last_arrow"] = None
         self.android_dropped = self.manager.Event()  # if android disconnects
         self.movement_lock = self.manager.Lock()
         self.android_queue = self.manager.Queue()  # Messages to send to Android
@@ -203,10 +203,11 @@ class RaspberryPi:
         self.command_queue.put(MV_TO_SNAP_ARROW_2)
         
     def navigate_obs_1(self):
-        if self.last_arrow  == LEFT_ARROW:
+        self.logger.info(f'inside last arrow: {self.shared["last_arrow"]}')
+        if self.shared["last_arrow"]  == LEFT_ARROW:
             self.logger.info("navigate around obstacle 1, left")
             self.command_queue.put(NAVIGATE_ARD_OBS_1_L)
-        elif self.last_arrow  == RIGHT_ARROW:
+        elif self.shared["last_arrow"]  == RIGHT_ARROW:
             self.logger.info("navigate around obstacle 1, right")
             self.command_queue.put(NAVIGATE_ARD_OBS_1_R)
         else:
@@ -217,10 +218,10 @@ class RaspberryPi:
         return
 
     def navigate_obs_2(self):
-        if self.last_arrow  == LEFT_ARROW:
+        if self.shared["last_arrow"]  == LEFT_ARROW:
             self.logger.info("navigate around obstacle 2, left")
             self.command_queue.put(NAVIGATE_ARD_OBS_2_L)
-        elif self.last_arrow  == RIGHT_ARROW:
+        elif self.shared["last_arrow"]  == RIGHT_ARROW:
             self.logger.info("navigate around obstacle 2, right")
             self.command_queue.put(NAVIGATE_ARD_OBS_2_R)
         else:
@@ -448,8 +449,8 @@ class RaspberryPi:
             except Exception:
                 self.logger.warning("Lock already released")
 
-        self.last_arrow = predicted_id
-        self.logger.info(f"Updated last_arrow to {marker_map.get(self.last_arrow)}")
+        self.shared["last_arrow"] = predicted_id
+        self.logger.info(f"Updated last_arrow to {marker_map.get(self.shared['last_arrow'])}")
         self.snap_done.set()
         return predicted_id
 
