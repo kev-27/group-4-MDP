@@ -79,8 +79,7 @@ class RaspberryPi:
         self.wall_complete = False  # signal wall has been tracked.
         self.obstacle2_length_half = None  # length of obstacle.
 
-        self.arrow_1 = None
-        self.arrow_2 = None
+        self.last_arrow = None
 
         # ======= init env ========
         self.logger = logger
@@ -197,32 +196,13 @@ class RaspberryPi:
     def mv_to_snap_arrow_1(self):
         self.logger.info("Moving forward to capture arrow 1.")
         self.command_queue.put(MV_TO_SNAP_ARROW_1)
-        self.movement_lock.acquire()
-        self.movement_lock.release()
-        self.arrow_1 = self.snap_and_rec("small")
-        try:
-            self.movement_lock.release()
-            self.logger.debug("movement_lock released (STM DONE).")
-        except Exception:
-            self.logger.warning(
-                "movement_lock was already released — ignoring duplicate DONE."
-            )
-        self.logger.info(f"First arrow is {marker_map.get(self.arrow_1)}")
+        self.command_queue.put("SNAP_small")
+        self.logger.info(f"First arrow is {marker_map.get(self.last_arrow)}")
 
     def mv_to_snap_arrow_2(self):
         self.logger.info("Moving forward to capture arrow 2.")
         self.command_queue.put(MV_TO_SNAP_ARROW_2)
-        self.movement_lock.acquire()
-        # self.arrow_2 = self.snap_and_rec("big")
-        # try:
-            # self.movement_lock.release()
-            # self.logger.debug("movement_lock released (STM DONE).")
-        # except Exception:
-            # self.logger.warning(
-                # "movement_lock was already released — ignoring duplicate DONE."
-           #  )
-        # self.logger.info(f"Second arrow is {marker_map.get(self.arrow_2)}")
-
+        
     def navigate_obs_1(self, dir):
         if dir == LEFT_ARROW:
             self.logger.info("navigate around obstacle 1, left")
@@ -268,7 +248,7 @@ class RaspberryPi:
         self.logger.info(f"Running test")
         self.android_queue.put(AndroidMessage("status", "running"))
         self.mv_to_snap_arrow_1()
-        self.navigate_obs_1(self.arrow_1)
+        self.navigate_obs_1(self.last_arrow)
         self.mv_to_snap_arrow_2()
         self.command_queue.put("FIN")
         return
@@ -470,6 +450,7 @@ class RaspberryPi:
             except Exception:
                 self.logger.warning("Lock already released")
 
+        self.last_arrow = predicted_id
         return predicted_id
 
     def clear_queues(self):
