@@ -87,10 +87,10 @@ class RaspberryPi:
         self.stm_link = STMLink()
         self.manager = Manager()  # manages shared resources
         self.android_dropped = self.manager.Event()  # if android disconnects
-        self.unpause = self.manager.Event()
         self.movement_lock = self.manager.Lock()
         self.android_queue = self.manager.Queue()  # Messages to send to Android
         self.rpi_action_queue = self.manager.Queue()
+        self.snap_done = self.manager.Event()
         self.command_queue = self.manager.Queue()
         self.path_queue = self.manager.Queue()
         # ======================================================
@@ -197,17 +197,16 @@ class RaspberryPi:
         self.logger.info("Moving forward to capture arrow 1.")
         self.command_queue.put(MV_TO_SNAP_ARROW_1)
         self.command_queue.put("SNAP_small")
-        self.logger.info(f"First arrow is {marker_map.get(self.last_arrow)}")
 
     def mv_to_snap_arrow_2(self):
         self.logger.info("Moving forward to capture arrow 2.")
         self.command_queue.put(MV_TO_SNAP_ARROW_2)
         
-    def navigate_obs_1(self, dir):
-        if dir == LEFT_ARROW:
+    def navigate_obs_1(self):
+        if self.last_arrow  == LEFT_ARROW:
             self.logger.info("navigate around obstacle 1, left")
             self.command_queue.put(NAVIGATE_ARD_OBS_1_L)
-        elif dir == RIGHT_ARROW:
+        elif self.last_arrow  == RIGHT_ARROW:
             self.logger.info("navigate around obstacle 1, right")
             self.command_queue.put(NAVIGATE_ARD_OBS_1_R)
         else:
@@ -217,11 +216,11 @@ class RaspberryPi:
             self.command_queue.put("FIN")
         return
 
-    def navigate_obs_2(self, dir):
-        if dir == LEFT_ARROW:
+    def navigate_obs_2(self):
+        if self.last_arrow  == LEFT_ARROW:
             self.logger.info("navigate around obstacle 2, left")
             self.command_queue.put(NAVIGATE_ARD_OBS_2_L)
-        elif dir == RIGHT_ARROW:
+        elif self.last_arrow  == RIGHT_ARROW:
             self.logger.info("navigate around obstacle 2, right")
             self.command_queue.put(NAVIGATE_ARD_OBS_2_R)
         else:
@@ -235,9 +234,9 @@ class RaspberryPi:
     # ============= main ==============
     def exec_task2(self):
         self.mv_to_snap_arrow_1()
-        self.navigate_obs_1(self.arrow_1)
+        self.navigate_obs_1()
         self.mv_to_snap_arrow_2()
-        self.navigate_obs_2(self.arrow_2)
+        self.navigate_obs_2()
         self.park_car()
         self.command_queue.put("FIN")
         return
@@ -248,7 +247,9 @@ class RaspberryPi:
         self.logger.info(f"Running test")
         self.android_queue.put(AndroidMessage("status", "running"))
         self.mv_to_snap_arrow_1()
-        self.navigate_obs_1(self.last_arrow)
+        self.snap_done.wait()  # block until snap done
+        self.snap_done.clear()
+        self.navigate_obs_1()
         self.mv_to_snap_arrow_2()
         self.command_queue.put("FIN")
         return
@@ -300,7 +301,6 @@ class RaspberryPi:
                     self.android_queue.put(AndroidMessage("status", "running"))
                     self.exec_test()
                     # self.exec_task2()
-                    self.unpause.set()
 
     def recv_stm(self) -> None:
         """
@@ -343,7 +343,6 @@ class RaspberryPi:
         while True:
             command: str = self.command_queue.get()
             self.logger.debug("Waiting for unpause signal...")
-            self.unpause.wait()
             self.logger.debug("Acquiring movement_lock before sending command...")
             self.movement_lock.acquire()
 
@@ -371,7 +370,6 @@ class RaspberryPi:
                     PiAction(cat="snap", value=obstacle_id_with_signal)
                 )
             elif command == "FIN":
-                self.unpause.clear()
                 self.movement_lock.release()
                 self.logger.info("Commands queue finished.")
                 self.android_queue.put(
@@ -424,7 +422,7 @@ class RaspberryPi:
 
             if results:
                 try:
-                    predicted_id = int(results.get("predicted_id", FAILED))
+                    predicted_id = int(results.get("image_id"))
                 except (KeyError, ValueError) as e:
                     self.logger.error(f"Malformed response from API: {results} - {e}")
                     predicted_id = FAILED
@@ -451,6 +449,8 @@ class RaspberryPi:
                 self.logger.warning("Lock already released")
 
         self.last_arrow = predicted_id
+        self.logger.info(f"Updated last_arrow to {marker_map.get(self.last_arrow)}")
+        self.snap_done.set()
         return predicted_id
 
     def clear_queues(self):
