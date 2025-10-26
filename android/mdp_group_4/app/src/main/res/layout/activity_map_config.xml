@@ -1,0 +1,235 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        android:layout_width="400dp"
+        android:layout_height="350dp"
+        android:orientation="horizontal">
+
+        <LinearLayout
+            android:layout_width="200dp"
+            android:layout_height="350dp"
+            android:orientation="vertical">
+
+            <LinearLayout
+                android:layout_width="160dp"
+                android:layout_height="350dp"
+                android:layout_marginStart="20dp"
+                android:layout_marginTop="10dp"
+                android:orientation="vertical">
+
+                <ToggleButton
+                    android:id="@+id/startpointToggleBtn"
+                    android:layout_width="140dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="10dp"
+                    android:layout_marginTop="5dp"
+                    android:paddingStart="5dp"
+                    android:textOff="SET START POINT"
+                    android:textOn="CANCEL"
+                    android:background="@drawable/border_black"/>
+
+
+                <LinearLayout
+                    android:layout_width="140dp"
+                    android:layout_marginStart="10dp"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+
+
+                    <ImageButton
+                        android:id="@+id/changeDirectionBtn"
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:layout_marginTop="15dp"
+                        android:background="@drawable/border_black"
+                        android:scaleType="fitCenter"
+                        android:padding="2dp"
+                        app:srcCompat="@drawable/compass_2" />
+
+                    <ImageButton
+                        android:id="@+id/addObstacleBtn"
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:layout_marginStart="36dp"
+                        android:layout_marginTop="15dp"
+                        android:background="@drawable/border_black"
+                        android:scaleType="centerInside"
+                        android:padding="6dp"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:srcCompat="@drawable/set" />
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:paddingTop="30px"
+                    android:layout_marginStart="10dp"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:layout_marginBottom="5dp">
+
+                        <ImageButton
+                            android:id="@+id/saveBtn"
+                            android:layout_width="40dp"
+                            android:layout_height="40dp"
+                            android:background="@drawable/save_button_text"
+                            android:contentDescription="Save Map"
+                            />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Save Map"
+                            android:textSize="12sp"
+                            android:textColor="@android:color/black"
+                            android:layout_gravity="center_vertical"
+                            android:layout_marginStart="8dp"
+                            />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:layout_marginBottom="5dp">
+
+                        <ImageButton
+                            android:id="@+id/loadBtn"
+                            android:layout_width="40dp"
+                            android:layout_height="40dp"
+                            android:background="@drawable/load_button_text"
+                            android:contentDescription="Load Map"
+                            />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Load Map"
+                            android:textSize="12sp"
+                            android:textColor="@android:color/black"
+                            android:layout_gravity="center_vertical"
+                            android:layout_marginStart="8dp"
+                            />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal">
+
+                        <ImageButton
+                            android:id="@+id/resetBtn"
+                            android:layout_width="40dp"
+                            android:layout_height="40dp"
+                            android:background="@drawable/reset_button_text"
+                            android:contentDescription="Reset Map"
+                            />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Reset Map"
+                            android:textSize="12sp"
+                            android:textColor="@android:color/black"
+                            android:layout_gravity="center_vertical"
+                            android:layout_marginStart="8dp"
+                            />
+                    </LinearLayout>
+
+                </LinearLayout>
+
+
+
+
+                <!--                android:drawableLeft="@mipmap/two_head_dragon"-->
+            </LinearLayout>
+        </LinearLayout>
+
+
+        <LinearLayout
+            android:layout_width="200dp"
+            android:layout_height="350dp"
+            android:orientation="vertical">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:orientation="vertical"
+                android:background="@drawable/border_black">
+
+
+                <LinearLayout
+                    android:layout_width="180dp"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginStart="10dp"
+                    android:layout_marginTop="10dp">
+                    <TextView
+                        android:id="@+id/textView_changeObstacle"
+                        android:layout_width="115dp"
+                        android:layout_height="24dp"
+                        android:textColor="@color/colorBlack"
+                        android:text="Change Obstacle: " />
+
+                    <Switch
+                        android:id="@+id/changeObstacleSwitch"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="15dp" />
+
+                </LinearLayout>
+                <LinearLayout
+                    android:layout_width="180dp"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginStart="10dp"
+                    android:layout_marginTop="10dp"
+                    android:layout_marginBottom="10dp">
+                    <TextView
+                        android:id="@+id/textView_drag"
+                        android:layout_width="34dp"
+                        android:textColor="@color/colorBlack"
+                        android:layout_height="wrap_content"
+                        android:text="Drag: " />
+
+                    <Switch
+                        android:id="@+id/dragSwitch"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="97dp" />
+
+                </LinearLayout>
+            </LinearLayout>
+<!--            "Preload Defaults"-->
+<!--            <Button-->
+<!--                android:id="@+id/updateMapBtn"-->
+<!--                android:layout_width="match_parent"-->
+<!--                android:layout_height="wrap_content"-->
+<!--                android:layout_marginTop="13dp"-->
+<!--                android:paddingEnd="10dp"-->
+<!--                android:text="DO NOT CLICK"-->
+<!--                android:background="@drawable/border_black_state"-->
+<!--                app:backgroundTint="@color/colorYellow"/>-->
+
+            <ImageView
+                android:id="@+id/eBtn"
+                android:layout_gravity="center"
+                android:layout_width="0dp"
+                android:layout_height="00dp"
+                android:layout_marginTop="20dp"
+                android:src="@drawable/snor_0"/>
+
+        </LinearLayout>
+    </LinearLayout>
+</androidx.coordinatorlayout.widget.CoordinatorLayout>
